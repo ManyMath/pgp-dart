@@ -1,6 +1,5 @@
 # `pgp`
-
-OpenPGP for Dart.  A command-line interface and library.
+OpenPGP and Sequoia for Dart.  A command-line interface and library.
 
 ## Getting started
 Run the command-line interface:
@@ -23,3 +22,12 @@ void main() {
     final publicKey = keyPair.publicKey;
 }
 ```
+
+## Development
+- To generate `pgp-ffi_bindings_generated.dart` Dart bindings for C:
+  ```
+  dart --enable-experiment=native-assets run ffigen --config ffigen.yaml
+  ```
+- If bindings are generated for a new (not previously supported/included in 
+  `lib/pgp_base.dart`) function, a wrapper must be written for it by hand 
+  (see: `generateMnemonic`, `generateAddress`).
