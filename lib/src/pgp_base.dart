@@ -3,11 +3,12 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 
-import 'pgp-ffi_bindings_generated.dart';
+import 'pgp-ffi_bindings_generated.dart' as ffi;
 
 const String _libName = 'pgp_ffi';
 
-/// The dynamic library in which the symbols for [PgpFfiBindings] can be found.
+/// The dynamic library in which the symbols for [ffi.PgpFfiBindings] can be
+/// found.
 final DynamicLibrary _dylib = () {
   if (Platform.isMacOS || Platform.isIOS) {
     return DynamicLibrary.open(
@@ -23,50 +24,62 @@ final DynamicLibrary _dylib = () {
 }();
 
 /// The bindings to the native functions in [_dylib].
-final PgpFfiBindings _bindings = PgpFfiBindings(_dylib);
+final ffi.PgpFfiBindings _bindings = ffi.PgpFfiBindings(_dylib);
+
+/// Status code returned by a `pgp-ffi` call.
+class PgpException implements Exception {
+  /// The non-zero `FFIError` code returned by `pgp-ffi`.
+  final int code;
+
+  PgpException(this.code);
+
+  @override
+  String toString() => 'PgpException: pgp-ffi returned $code';
+}
+
+/// A handle to an OpenPGP certificate owned by `pgp-ffi`.
+///
+/// Call [dispose] to release the underlying native certificate.
+class Certificate {
+  final Pointer<ffi.Certificate> _ptr;
+
+  Certificate._(this._ptr);
+
+  /// The opaque native pointer, for passing to further FFI calls.
+  Pointer<ffi.Certificate> get pointer => _ptr;
+
+  /// Frees the native certificate.  The handle must not be used afterwards.
+  void dispose() => _bindings.pgp_certificate_free(_ptr);
+}
 
 class PGP {
-  /// Generates a new PGP key.
-  String generateKey() {
-    final resultPointer = _bindings.generate_key();
-    final result = resultPointer.cast<Utf8>().toDartString();
-    calloc.free(resultPointer); // Free memory
-    return result;
+  /// Generates a new certificate carrying [userId].
+  Certificate generateKey(String userId) {
+    final userIdPointer = userId.toNativeUtf8();
+    final out = calloc<Pointer<ffi.Certificate>>();
+    try {
+      final code =
+          _bindings.pgp_key_generate(userIdPointer.cast(), out);
+      if (code != 0) throw PgpException(code);
+      return Certificate._(out.value);
+    } finally {
+      calloc.free(userIdPointer);
+      calloc.free(out);
+    }
   }
 
-  /// Exports the key in ASCII-armored format.
-  String exportAsciiKey(String cert) {
-    final certPointer = cert.toNativeUtf8();
-    final resultPointer = _bindings.export_ascii_key(certPointer.cast());
-    final result = resultPointer.cast<Utf8>().toDartString();
-    calloc.free(certPointer);
-    calloc.free(resultPointer); // Free memory
-    return result;
-  }
-
-  /// Encrypts the provided message with the given PGP certificate.
-  String encryptMessage(String cert, String message) {
-    final certPointer = cert.toNativeUtf8();
-    final messagePointer = message.toNativeUtf8();
-    final resultPointer =
-        _bindings.encrypt_message(certPointer.cast(), messagePointer.cast());
-    final result = resultPointer.cast<Utf8>().toDartString();
-    calloc.free(certPointer);
-    calloc.free(messagePointer);
-    calloc.free(resultPointer); // Free memory
-    return result;
-  }
-
-  /// Decrypts the provided ciphertext with the given PGP certificate.
-  String decryptMessage(String cert, String ciphertext) {
-    final certPointer = cert.toNativeUtf8();
-    final ciphertextPointer = ciphertext.toNativeUtf8();
-    final resultPointer =
-        _bindings.decrypt_message(certPointer.cast(), ciphertextPointer.cast());
-    final result = resultPointer.cast<Utf8>().toDartString();
-    calloc.free(certPointer);
-    calloc.free(ciphertextPointer);
-    calloc.free(resultPointer); // Free memory
-    return result;
+  /// Parses an ASCII-armored certificate.
+  Certificate certificateFromArmored(String armored) {
+    final armoredPointer = armored.toNativeUtf8();
+    final out = calloc<Pointer<ffi.Certificate>>();
+    try {
+      final code =
+          _bindings.pgp_certificate_from_armored(armoredPointer.cast(), out);
+      if (code != 0) throw PgpException(code);
+      return Certificate._(out.value);
+    } finally {
+      calloc.free(armoredPointer);
+      calloc.free(out);
+    }
   }
 }

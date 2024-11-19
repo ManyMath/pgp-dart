@@ -2,15 +2,16 @@ import 'package:pgp/pgp.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('A group of tests', () {
-    final awesome = Awesome();
+  final pgp = PGP();
 
-    setUp(() {
-      // Additional setup goes here.
-    });
+  test('generateKey returns a certificate handle', () {
+    final cert = pgp.generateKey('someone@example.org');
+    expect(cert.pointer.address, isNonZero);
+    cert.dispose();
+  });
 
-    test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
-    });
+  test('certificateFromArmored rejects invalid input', () {
+    expect(() => pgp.certificateFromArmored('not a certificate'),
+        throwsA(isA<PgpException>()));
   });
 }

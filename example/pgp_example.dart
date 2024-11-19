@@ -3,20 +3,10 @@ import 'package:pgp/pgp.dart';
 void main() {
   final pgp = PGP();
 
-  // Generate a PGP key.
-  final key = pgp.generateKey();
-  print("Generated Key: \n$key");
+  // Generate a certificate for a user ID.
+  final cert = pgp.generateKey('someone@example.org');
+  print('Generated certificate: ${cert.pointer}');
 
-  // Export the key in ASCII-armored format.
-  final asciiKey = pgp.exportAsciiKey(key);
-  print("ASCII-Armored Key: \n$asciiKey");
-
-  // Encrypt a message.
-  const message = "Hello, world!";
-  final encrypted = pgp.encryptMessage(key, message);
-  print("Encrypted Message: \n$encrypted");
-
-  // Decrypt the message.
-  final decrypted = pgp.decryptMessage(key, encrypted);
-  print("Decrypted Message: \n$decrypted");
+  // Release the native certificate when done.
+  cert.dispose();
 }

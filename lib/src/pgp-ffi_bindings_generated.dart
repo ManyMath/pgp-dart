@@ -25,68 +25,103 @@ class PgpFfiBindings {
           lookup)
       : _lookup = lookup;
 
-  /// Decrypts a message and returns the plaintext.
-  ffi.Pointer<ffi.Char> decrypt_message(
-    ffi.Pointer<ffi.Char> cert_str,
-    ffi.Pointer<ffi.Char> ciphertext,
+  /// # Safety
+  /// `cert` must be non-null and from a `pgp_certificate_*` constructor.
+  void pgp_certificate_free(
+    ffi.Pointer<Certificate> cert,
   ) {
-    return _decrypt_message(
-      cert_str,
-      ciphertext,
+    return _pgp_certificate_free(
+      cert,
     );
   }
 
-  late final _decrypt_messagePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>)>>('decrypt_message');
-  late final _decrypt_message = _decrypt_messagePtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _pgp_certificate_freePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<Certificate>)>>(
+          'pgp_certificate_free');
+  late final _pgp_certificate_free = _pgp_certificate_freePtr
+      .asFunction<void Function(ffi.Pointer<Certificate>)>();
 
-  /// Encrypts a message and returns the ciphertext.
-  ffi.Pointer<ffi.Char> encrypt_message(
-    ffi.Pointer<ffi.Char> cert_str,
-    ffi.Pointer<ffi.Char> message,
+  /// # Safety
+  /// `key` must be non-null and from a `pgp_key_*` constructor.
+  void pgp_key_free(
+    ffi.Pointer<Key> key,
   ) {
-    return _encrypt_message(
-      cert_str,
-      message,
+    return _pgp_key_free(
+      key,
     );
   }
 
-  late final _encrypt_messagePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>,
-              ffi.Pointer<ffi.Char>)>>('encrypt_message');
-  late final _encrypt_message = _encrypt_messagePtr.asFunction<
-      ffi.Pointer<ffi.Char> Function(
-          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _pgp_key_freePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<Key>)>>(
+          'pgp_key_free');
+  late final _pgp_key_free =
+      _pgp_key_freePtr.asFunction<void Function(ffi.Pointer<Key>)>();
 
-  /// Exports the generated key in ASCII-armored format.
-  ffi.Pointer<ffi.Char> export_ascii_key(
-    ffi.Pointer<ffi.Char> cert_str,
+  /// # Safety
+  /// `user_id` must be non-null and from a `pgp_user_id_*` constructor.
+  void pgp_user_id_free(
+    ffi.Pointer<UserID> user_id,
   ) {
-    return _export_ascii_key(
-      cert_str,
+    return _pgp_user_id_free(
+      user_id,
     );
   }
 
-  late final _export_ascii_keyPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>)>>('export_ascii_key');
-  late final _export_ascii_key = _export_ascii_keyPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+  late final _pgp_user_id_freePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<UserID>)>>(
+          'pgp_user_id_free');
+  late final _pgp_user_id_free =
+      _pgp_user_id_freePtr.asFunction<void Function(ffi.Pointer<UserID>)>();
 
-  /// Generates an encryption-capable key.
-  ffi.Pointer<ffi.Char> generate_key() {
-    return _generate_key();
+  /// Parse an ASCII-armored PGP cert into `*cert`.
+  ///
+  /// # Safety
+  /// `armored` and `cert` must be non-null.
+  int pgp_certificate_from_armored(
+    ffi.Pointer<ffi.Char> armored,
+    ffi.Pointer<ffi.Pointer<Certificate>> cert,
+  ) {
+    return _pgp_certificate_from_armored(
+      armored,
+      cert,
+    );
   }
 
-  late final _generate_keyPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
-          'generate_key');
-  late final _generate_key =
-      _generate_keyPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
+  late final _pgp_certificate_from_armoredPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_from_armored');
+  late final _pgp_certificate_from_armored =
+      _pgp_certificate_from_armoredPtr.asFunction<
+          int Function(
+              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Generate a new certificate with the given user ID.
+  ///
+  /// # Safety
+  /// `user_id` and `new_cert` must be non-null.
+  int pgp_key_generate(
+    ffi.Pointer<ffi.Char> user_id,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_key_generate(
+      user_id,
+      new_cert,
+    );
+  }
+
+  late final _pgp_key_generatePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>>('pgp_key_generate');
+  late final _pgp_key_generate = _pgp_key_generatePtr.asFunction<
+      int Function(
+          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<Certificate>>)>();
 }
+
+final class Certificate extends ffi.Opaque {}
+
+final class Key extends ffi.Opaque {}
+
+final class UserID extends ffi.Opaque {}
