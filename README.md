@@ -1,33 +1,29 @@
 # `pgp`
-OpenPGP and Sequoia for Dart.  A command-line interface and library.
+OpenPGP and Sequoia for Dart, backed by the `pgp-ffi` Rust crate.
 
 ## Getting started
-Run the command-line interface:
+Add the package:
 ```sh
-dart pub activate pgp
-pgp
-```
-
-or use the library as in:
-```dart
 dart pub add pgp
 ```
-<!--
+
+Generate a certificate and release it when done:
 ```dart
 import 'package:pgp/pgp.dart';
 
 void main() {
-    final pgp = OpenPGP();
-    final keyPair = pgp.generateKeyPair();
-    final publicKey = keyPair.publicKey;
+  final pgp = PGP();
+  final cert = pgp.generateKey('someone@example.org');
+  // ... use cert.pointer with further FFI calls ...
+  cert.dispose();
 }
 ```
 
 ## Development
-- To generate `pgp-ffi_bindings_generated.dart` Dart bindings for C:
+- To generate the `lib/src/pgp-ffi_bindings_generated.dart` bindings for the
+  `pgp-ffi` C header:
   ```
-  dart --enable-experiment=native-assets run ffigen --config ffigen.yaml
+  dart run ffigen --config ffigen.yaml
   ```
-- If bindings are generated for a new (not previously supported/included in 
-  `lib/pgp_base.dart`) function, a wrapper must be written for it by hand 
-  (see: `generateMnemonic`, `generateAddress`).
+- New bindings expose opaque pointers and status codes.  Each native function
+  needs a hand-written wrapper in `lib/src/pgp_base.dart` (see `generateKey`).
