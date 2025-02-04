@@ -118,6 +118,160 @@ class PgpFfiBindings {
   late final _pgp_key_generate = _pgp_key_generatePtr.asFunction<
       int Function(
           ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Export the certificate as an ASCII-armored secret key block.
+  /// Caller must free `*armored` with `free()`.
+  ///
+  /// # Safety
+  /// `cert` and `armored` must be non-null.
+  int pgp_certificate_export_armored(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored,
+  ) {
+    return _pgp_certificate_export_armored(
+      cert,
+      armored,
+    );
+  }
+
+  late final _pgp_certificate_export_armoredPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_export_armored');
+  late final _pgp_certificate_export_armored =
+      _pgp_certificate_export_armoredPtr.asFunction<
+          int Function(
+              ffi.Pointer<Certificate>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Revoke the cert and write the updated cert to `*revoked_cert`.
+  ///
+  /// # Safety
+  /// `cert` and `revoked_cert` must be non-null.
+  int pgp_certificate_revoke(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Pointer<Certificate>> revoked_cert,
+  ) {
+    return _pgp_certificate_revoke(
+      cert,
+      revoked_cert,
+    );
+  }
+
+  late final _pgp_certificate_revokePtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_revoke');
+  late final _pgp_certificate_revoke = _pgp_certificate_revokePtr.asFunction<
+      int Function(
+          ffi.Pointer<Certificate>, ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Add a transport-encryption subkey, writing the updated cert to `*new_cert`.
+  ///
+  /// # Safety
+  /// `cert` and `new_cert` must be non-null.
+  int pgp_certificate_add_transport_encryption_subkey(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_certificate_add_transport_encryption_subkey(
+      cert,
+      new_cert,
+    );
+  }
+
+  late final _pgp_certificate_add_transport_encryption_subkeyPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_add_transport_encryption_subkey');
+  late final _pgp_certificate_add_transport_encryption_subkey =
+      _pgp_certificate_add_transport_encryption_subkeyPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Revoke the subkey at `subkey_index`, writing the updated cert to `*new_cert`.
+  ///
+  /// # Safety
+  /// `cert` and `new_cert` must be non-null.
+  int pgp_certificate_revoke_subkey(
+    ffi.Pointer<Certificate> cert,
+    int subkey_index,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_certificate_revoke_subkey(
+      cert,
+      subkey_index,
+      new_cert,
+    );
+  }
+
+  late final _pgp_certificate_revoke_subkeyPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>, ffi.Uint32,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_revoke_subkey');
+  late final _pgp_certificate_revoke_subkey =
+      _pgp_certificate_revoke_subkeyPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, int,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Add `user_id` to the cert, writing the updated cert to `*new_cert`.
+  ///
+  /// # Safety
+  /// `cert`, `user_id`, and `new_cert` must be non-null.
+  int pgp_certificate_add_userid(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> user_id,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_certificate_add_userid(
+      cert,
+      user_id,
+      new_cert,
+    );
+  }
+
+  late final _pgp_certificate_add_useridPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_add_userid');
+  late final _pgp_certificate_add_userid =
+      _pgp_certificate_add_useridPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Revoke the exact-match user ID, writing the updated cert to `*new_cert`.
+  ///
+  /// # Safety
+  /// `cert`, `user_id`, and `new_cert` must be non-null.
+  int pgp_certificate_revoke_userid(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> user_id,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_certificate_revoke_userid(
+      cert,
+      user_id,
+      new_cert,
+    );
+  }
+
+  late final _pgp_certificate_revoke_useridPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_revoke_userid');
+  late final _pgp_certificate_revoke_userid =
+      _pgp_certificate_revoke_useridPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>();
 }
 
 final class Certificate extends ffi.Opaque {}
