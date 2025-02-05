@@ -48,6 +48,20 @@ class Certificate {
   /// The opaque native pointer, for passing to further FFI calls.
   Pointer<ffi.Certificate> get pointer => _ptr;
 
+  /// Exports the certificate as an ASCII-armored secret key block.
+  String exportArmored() {
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_certificate_export_armored(_ptr, out);
+      if (code != 0) throw PgpException(code);
+      final armored = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value); // Allocated by pgp-ffi with malloc.
+      return armored;
+    } finally {
+      calloc.free(out);
+    }
+  }
+
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);
 }

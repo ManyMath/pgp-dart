@@ -14,4 +14,16 @@ void main() {
     expect(() => pgp.certificateFromArmored('not a certificate'),
         throwsA(isA<PgpException>()));
   });
+
+  test('exportArmored round-trips through certificateFromArmored', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final armored = cert.exportArmored();
+    expect(armored, contains('-----BEGIN PGP'));
+
+    final parsed = pgp.certificateFromArmored(armored);
+    expect(parsed.pointer.address, isNonZero);
+
+    parsed.dispose();
+    cert.dispose();
+  });
 }
