@@ -39,7 +39,9 @@ class PgpException implements Exception {
 
 /// A handle to an OpenPGP certificate owned by `pgp-ffi`.
 ///
-/// Call [dispose] to release the underlying native certificate.
+/// The mutating methods return a new [Certificate]; the receiver is left
+/// untouched and must be released separately.  Call [dispose] to free a
+/// certificate once it is no longer needed.
 class Certificate {
   final Pointer<ffi.Certificate> _ptr;
 
@@ -62,8 +64,24 @@ class Certificate {
     }
   }
 
+  /// Revokes the certificate, returning the revoked certificate.
+  Certificate revoke() =>
+      _derive((out) => _bindings.pgp_certificate_revoke(_ptr, out));
+
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);
+
+  /// Runs a `pgp-ffi` call that writes a new certificate to its out-pointer.
+  Certificate _derive(int Function(Pointer<Pointer<ffi.Certificate>>) call) {
+    final out = calloc<Pointer<ffi.Certificate>>();
+    try {
+      final code = call(out);
+      if (code != 0) throw PgpException(code);
+      return Certificate._(out.value);
+    } finally {
+      calloc.free(out);
+    }
+  }
 }
 
 class PGP {

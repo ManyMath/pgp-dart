@@ -26,4 +26,12 @@ void main() {
     parsed.dispose();
     cert.dispose();
   });
+
+  test('revoke returns a revoked certificate', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final revoked = cert.revoke();
+    expect(revoked.pointer.address, isNonZero);
+    revoked.dispose();
+    cert.dispose();
+  });
 }
