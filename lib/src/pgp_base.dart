@@ -68,6 +68,10 @@ class Certificate {
   Certificate revoke() =>
       _derive((out) => _bindings.pgp_certificate_revoke(_ptr, out));
 
+  /// Adds a transport-encryption subkey, returning the updated certificate.
+  Certificate addTransportEncryptionSubkey() => _derive((out) =>
+      _bindings.pgp_certificate_add_transport_encryption_subkey(_ptr, out));
+
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);
 

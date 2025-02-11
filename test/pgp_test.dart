@@ -34,4 +34,12 @@ void main() {
     revoked.dispose();
     cert.dispose();
   });
+
+  test('addTransportEncryptionSubkey returns an updated certificate', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final updated = cert.addTransportEncryptionSubkey();
+    expect(updated.pointer.address, isNonZero);
+    updated.dispose();
+    cert.dispose();
+  });
 }
