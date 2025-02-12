@@ -42,4 +42,13 @@ void main() {
     updated.dispose();
     cert.dispose();
   });
+
+  test('revokeSubkey revokes the generated subkey', () {
+    // A generated certificate carries one transport-encryption subkey.
+    final cert = pgp.generateKey('someone@example.org');
+    final updated = cert.revokeSubkey(0);
+    expect(updated.pointer.address, isNonZero);
+    updated.dispose();
+    cert.dispose();
+  });
 }
