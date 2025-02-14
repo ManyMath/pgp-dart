@@ -51,4 +51,12 @@ void main() {
     updated.dispose();
     cert.dispose();
   });
+
+  test('addUserId returns an updated certificate', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final updated = cert.addUserId('other@example.org');
+    expect(updated.pointer.address, isNonZero);
+    updated.dispose();
+    cert.dispose();
+  });
 }

@@ -77,6 +77,17 @@ class Certificate {
   Certificate revokeSubkey(int index) => _derive(
       (out) => _bindings.pgp_certificate_revoke_subkey(_ptr, index, out));
 
+  /// Adds [userId] to the certificate, returning the updated certificate.
+  Certificate addUserId(String userId) {
+    final userIdPointer = userId.toNativeUtf8();
+    try {
+      return _derive((out) => _bindings.pgp_certificate_add_userid(
+          _ptr, userIdPointer.cast(), out));
+    } finally {
+      calloc.free(userIdPointer);
+    }
+  }
+
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);
 
