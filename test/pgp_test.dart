@@ -59,4 +59,14 @@ void main() {
     updated.dispose();
     cert.dispose();
   });
+
+  test('revokeUserId revokes an added user ID', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final withUser = cert.addUserId('other@example.org');
+    final revoked = withUser.revokeUserId('other@example.org');
+    expect(revoked.pointer.address, isNonZero);
+    revoked.dispose();
+    withUser.dispose();
+    cert.dispose();
+  });
 }

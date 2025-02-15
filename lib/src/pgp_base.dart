@@ -88,6 +88,17 @@ class Certificate {
     }
   }
 
+  /// Revokes the exact-match [userId], returning the updated certificate.
+  Certificate revokeUserId(String userId) {
+    final userIdPointer = userId.toNativeUtf8();
+    try {
+      return _derive((out) => _bindings.pgp_certificate_revoke_userid(
+          _ptr, userIdPointer.cast(), out));
+    } finally {
+      calloc.free(userIdPointer);
+    }
+  }
+
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);
 
