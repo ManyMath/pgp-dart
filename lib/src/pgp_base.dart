@@ -1,30 +1,12 @@
 import 'dart:ffi';
-import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 
+import 'native_library.dart';
 import 'pgp-ffi_bindings_generated.dart' as ffi;
 
-const String _libName = 'pgp_ffi';
-
-/// The dynamic library in which the symbols for [ffi.PgpFfiBindings] can be
-/// found.
-final DynamicLibrary _dylib = () {
-  if (Platform.isMacOS || Platform.isIOS) {
-    return DynamicLibrary.open(
-        'rust/target/release/$_libName.framework/lib$_libName');
-  }
-  if (Platform.isAndroid || Platform.isLinux) {
-    return DynamicLibrary.open('pgp-ffi/target/release/lib$_libName.so');
-  }
-  if (Platform.isWindows) {
-    return DynamicLibrary.open('pgp-ffi/target/release/lib$_libName.dll');
-  }
-  throw UnsupportedError('Unknown platform: ${Platform.operatingSystem}');
-}();
-
-/// The bindings to the native functions in [_dylib].
-final ffi.PgpFfiBindings _bindings = ffi.PgpFfiBindings(_dylib);
+/// The bindings to the native functions in [nativeLibrary].
+final ffi.PgpFfiBindings _bindings = ffi.PgpFfiBindings(nativeLibrary);
 
 /// Status code returned by a `pgp-ffi` call.
 class PgpException implements Exception {
