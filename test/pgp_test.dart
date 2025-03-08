@@ -18,7 +18,7 @@ void main() {
   test('exportArmored round-trips through certificateFromArmored', () {
     final cert = pgp.generateKey('someone@example.org');
     final armored = cert.exportArmored();
-    expect(armored, contains('-----BEGIN PGP'));
+    expect(armored, contains('-----BEGIN PGP PRIVATE KEY BLOCK-----'));
 
     final parsed = pgp.certificateFromArmored(armored);
     expect(parsed.pointer.address, isNonZero);
@@ -27,11 +27,34 @@ void main() {
     cert.dispose();
   });
 
+  test('exportPublicArmored emits a public key block', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final armored = cert.exportPublicArmored();
+    expect(armored, contains('-----BEGIN PGP PUBLIC KEY BLOCK-----'));
+    expect(armored, isNot(contains('PRIVATE KEY BLOCK')));
+    cert.dispose();
+  });
+
+  test('exportSecretArmored emits a private key block', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final armored = cert.exportSecretArmored();
+    expect(armored, contains('-----BEGIN PGP PRIVATE KEY BLOCK-----'));
+    cert.dispose();
+  });
+
   test('revoke returns a revoked certificate', () {
     final cert = pgp.generateKey('someone@example.org');
     final revoked = cert.revoke();
     expect(revoked.pointer.address, isNonZero);
     revoked.dispose();
+    cert.dispose();
+  });
+
+  test('addSigningSubkey returns an updated certificate', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final updated = cert.addSigningSubkey();
+    expect(updated.pointer.address, isNonZero);
+    updated.dispose();
     cert.dispose();
   });
 

@@ -119,6 +119,56 @@ class PgpFfiBindings {
       int Function(
           ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<Certificate>>)>();
 
+  /// Export the certificate as an ASCII-armored public key block.
+  /// Caller must free `*armored` with `free()`.
+  ///
+  /// # Safety
+  /// `cert` and `armored` must be non-null.
+  int pgp_certificate_export_public_armored(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored,
+  ) {
+    return _pgp_certificate_export_public_armored(
+      cert,
+      armored,
+    );
+  }
+
+  late final _pgp_certificate_export_public_armoredPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_export_public_armored');
+  late final _pgp_certificate_export_public_armored =
+      _pgp_certificate_export_public_armoredPtr.asFunction<
+          int Function(
+              ffi.Pointer<Certificate>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Export the certificate as an ASCII-armored secret key block.
+  /// Caller must free `*armored` with `free()`.
+  ///
+  /// # Safety
+  /// `cert` and `armored` must be non-null.
+  int pgp_certificate_export_secret_armored(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored,
+  ) {
+    return _pgp_certificate_export_secret_armored(
+      cert,
+      armored,
+    );
+  }
+
+  late final _pgp_certificate_export_secret_armoredPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_export_secret_armored');
+  late final _pgp_certificate_export_secret_armored =
+      _pgp_certificate_export_secret_armoredPtr.asFunction<
+          int Function(
+              ffi.Pointer<Certificate>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
   /// Export the certificate as an ASCII-armored secret key block.
   /// Caller must free `*armored` with `free()`.
   ///
@@ -188,6 +238,30 @@ class PgpFfiBindings {
       'pgp_certificate_add_transport_encryption_subkey');
   late final _pgp_certificate_add_transport_encryption_subkey =
       _pgp_certificate_add_transport_encryption_subkeyPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Add a signing subkey, writing the updated cert to `*new_cert`.
+  ///
+  /// # Safety
+  /// `cert` and `new_cert` must be non-null.
+  int pgp_certificate_add_signing_subkey(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_certificate_add_signing_subkey(
+      cert,
+      new_cert,
+    );
+  }
+
+  late final _pgp_certificate_add_signing_subkeyPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_add_signing_subkey');
+  late final _pgp_certificate_add_signing_subkey =
+      _pgp_certificate_add_signing_subkeyPtr.asFunction<
           int Function(ffi.Pointer<Certificate>,
               ffi.Pointer<ffi.Pointer<Certificate>>)>();
 

@@ -32,11 +32,27 @@ class Certificate {
   /// The opaque native pointer, for passing to further FFI calls.
   Pointer<ffi.Certificate> get pointer => _ptr;
 
+  /// Exports the certificate as an ASCII-armored public key block.
+  String exportPublicArmored() => _exportArmored(
+        _bindings.pgp_certificate_export_public_armored,
+      );
+
   /// Exports the certificate as an ASCII-armored secret key block.
-  String exportArmored() {
+  String exportSecretArmored() => _exportArmored(
+        _bindings.pgp_certificate_export_secret_armored,
+      );
+
+  /// Exports the certificate as an ASCII-armored secret key block.
+  ///
+  /// Prefer [exportPublicArmored] when sharing a certificate with others.
+  String exportArmored() => exportSecretArmored();
+
+  String _exportArmored(
+    int Function(Pointer<ffi.Certificate>, Pointer<Pointer<Char>>) call,
+  ) {
     final out = calloc<Pointer<Char>>();
     try {
-      final code = _bindings.pgp_certificate_export_armored(_ptr, out);
+      final code = call(_ptr, out);
       if (code != 0) throw PgpException(code);
       final armored = out.value.cast<Utf8>().toDartString();
       calloc.free(out.value); // Allocated by pgp-ffi with malloc.
@@ -53,6 +69,10 @@ class Certificate {
   /// Adds a transport-encryption subkey, returning the updated certificate.
   Certificate addTransportEncryptionSubkey() => _derive((out) =>
       _bindings.pgp_certificate_add_transport_encryption_subkey(_ptr, out));
+
+  /// Adds a signing subkey, returning the updated certificate.
+  Certificate addSigningSubkey() =>
+      _derive((out) => _bindings.pgp_certificate_add_signing_subkey(_ptr, out));
 
   /// Revokes the subkey at [index] (counting subkeys only), returning the
   /// updated certificate.
@@ -103,8 +123,7 @@ class PGP {
     final userIdPointer = userId.toNativeUtf8();
     final out = calloc<Pointer<ffi.Certificate>>();
     try {
-      final code =
-          _bindings.pgp_key_generate(userIdPointer.cast(), out);
+      final code = _bindings.pgp_key_generate(userIdPointer.cast(), out);
       if (code != 0) throw PgpException(code);
       return Certificate._(out.value);
     } finally {
