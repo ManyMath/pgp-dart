@@ -47,6 +47,18 @@ class Certificate {
   /// Prefer [exportPublicArmored] when sharing a certificate with others.
   String exportArmored() => exportSecretArmored();
 
+  /// Encrypts [plaintext] to this certificate as an ASCII-armored message.
+  String encrypt(String plaintext) => _transformString(
+        plaintext,
+        _bindings.pgp_certificate_encrypt_string,
+      );
+
+  /// Decrypts an ASCII-armored [message] with this secret certificate.
+  String decrypt(String message) => _transformString(
+        message,
+        _bindings.pgp_certificate_decrypt_string,
+      );
+
   String _exportArmored(
     int Function(Pointer<ffi.Certificate>, Pointer<Pointer<Char>>) call,
   ) {
@@ -58,6 +70,28 @@ class Certificate {
       calloc.free(out.value); // Allocated by pgp-ffi with malloc.
       return armored;
     } finally {
+      calloc.free(out);
+    }
+  }
+
+  String _transformString(
+    String input,
+    int Function(
+      Pointer<ffi.Certificate>,
+      Pointer<Char>,
+      Pointer<Pointer<Char>>,
+    ) call,
+  ) {
+    final inputPointer = input.toNativeUtf8();
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = call(_ptr, inputPointer.cast(), out);
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value); // Allocated by pgp-ffi with malloc.
+      return result;
+    } finally {
+      calloc.free(inputPointer);
       calloc.free(out);
     }
   }

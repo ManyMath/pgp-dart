@@ -42,6 +42,29 @@ void main() {
     cert.dispose();
   });
 
+  test('encrypt and decrypt round-trip through a public certificate', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final publicCert = pgp.certificateFromArmored(cert.exportPublicArmored());
+
+    final encrypted = publicCert.encrypt('hello OpenPGP');
+    expect(encrypted, contains('-----BEGIN PGP MESSAGE-----'));
+    expect(cert.decrypt(encrypted), 'hello OpenPGP');
+
+    publicCert.dispose();
+    cert.dispose();
+  });
+
+  test('decrypt rejects a public-only certificate', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final publicCert = pgp.certificateFromArmored(cert.exportPublicArmored());
+    final encrypted = publicCert.encrypt('hello OpenPGP');
+
+    expect(() => publicCert.decrypt(encrypted), throwsA(isA<PgpException>()));
+
+    publicCert.dispose();
+    cert.dispose();
+  });
+
   test('revoke returns a revoked certificate', () {
     final cert = pgp.generateKey('someone@example.org');
     final revoked = cert.revoke();
