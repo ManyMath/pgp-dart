@@ -248,6 +248,62 @@ class PgpFfiBindings {
           int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 
+  /// Sign `plaintext` with the certificate and write an ASCII-armored signed
+  /// message to `*armored_message`. Caller must free `*armored_message` with
+  /// `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `plaintext`, and `armored_message` must be non-null.
+  int pgp_certificate_sign_string(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> plaintext,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored_message,
+  ) {
+    return _pgp_certificate_sign_string(
+      cert,
+      plaintext,
+      armored_message,
+    );
+  }
+
+  late final _pgp_certificate_sign_stringPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_sign_string');
+  late final _pgp_certificate_sign_string =
+      _pgp_certificate_sign_stringPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Verify an ASCII-armored signed message using the certificate and write the
+  /// verified plaintext to `*plaintext`. Caller must free `*plaintext` with
+  /// `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `armored_message`, and `plaintext` must be non-null.
+  int pgp_certificate_verify_string(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> armored_message,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> plaintext,
+  ) {
+    return _pgp_certificate_verify_string(
+      cert,
+      armored_message,
+      plaintext,
+    );
+  }
+
+  late final _pgp_certificate_verify_stringPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_verify_string');
+  late final _pgp_certificate_verify_string =
+      _pgp_certificate_verify_stringPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
   /// Revoke the cert and write the updated cert to `*revoked_cert`.
   ///
   /// # Safety

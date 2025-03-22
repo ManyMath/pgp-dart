@@ -59,6 +59,20 @@ class Certificate {
         _bindings.pgp_certificate_decrypt_string,
       );
 
+  /// Signs [plaintext] with this secret certificate as an armored message.
+  String sign(String plaintext) => _transformString(
+        plaintext,
+        _bindings.pgp_certificate_sign_string,
+      );
+
+  /// Verifies an armored signed [message] with this certificate.
+  ///
+  /// Returns the message plaintext if the signature is valid.
+  String verify(String message) => _transformString(
+        message,
+        _bindings.pgp_certificate_verify_string,
+      );
+
   String _exportArmored(
     int Function(Pointer<ffi.Certificate>, Pointer<Pointer<Char>>) call,
   ) {

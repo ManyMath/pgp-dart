@@ -65,6 +65,29 @@ void main() {
     cert.dispose();
   });
 
+  test('sign and verify round-trip through a public certificate', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final publicCert = pgp.certificateFromArmored(cert.exportPublicArmored());
+
+    final signed = cert.sign('hello signed OpenPGP');
+    expect(signed, contains('-----BEGIN PGP MESSAGE-----'));
+    expect(publicCert.verify(signed), 'hello signed OpenPGP');
+
+    publicCert.dispose();
+    cert.dispose();
+  });
+
+  test('verify rejects a different certificate', () {
+    final cert = pgp.generateKey('someone@example.org');
+    final other = pgp.generateKey('other@example.org');
+    final signed = cert.sign('hello signed OpenPGP');
+
+    expect(() => other.verify(signed), throwsA(isA<PgpException>()));
+
+    other.dispose();
+    cert.dispose();
+  });
+
   test('revoke returns a revoked certificate', () {
     final cert = pgp.generateKey('someone@example.org');
     final revoked = cert.revoke();
@@ -90,7 +113,7 @@ void main() {
   });
 
   test('revokeSubkey revokes the generated subkey', () {
-    // A generated certificate carries one transport-encryption subkey.
+    // The first generated subkey is transport-encryption capable.
     final cert = pgp.generateKey('someone@example.org');
     final updated = cert.revokeSubkey(0);
     expect(updated.pointer.address, isNonZero);
