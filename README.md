@@ -13,27 +13,39 @@ Add the package:
 dart pub add pgp
 ```
 
-Generate a certificate, manage its keys and user IDs, and export it:
+Generate a certificate, share its public key, encrypt/decrypt, sign/verify, and
+export the secret key for storage:
 ```dart
 import 'package:pgp/pgp.dart';
 
 void main() {
   final pgp = PGP();
-  var cert = pgp.generateKey('someone@example.org');
+  final cert = pgp.generateKey('someone@example.org');
+  final publicCert = pgp.certificateFromArmored(cert.exportPublicArmored());
 
-  // Key-management methods return a new certificate; dispose the old one.
-  final updated = cert.addUserId('other@example.org');
-  cert.dispose();
-  cert = updated;
+  final encrypted = publicCert.encrypt('hello');
+  print(cert.decrypt(encrypted));
 
-  print(cert.exportArmored());
+  final signed = cert.sign('hello');
+  print(publicCert.verify(signed));
+
+  print(cert.exportSecretArmored());
+  publicCert.dispose();
   cert.dispose();
 }
 ```
 
-See `example/pgp_example.dart` for the full set of operations: adding and
-revoking user IDs and subkeys, and revoking the certificate. Build the native
-library first, then run it from the package root:
+The package intentionally exposes common certificate and message workflows, not
+the full OpenPGP packet/keyserver surface:
+
+- generate certificates with encryption and signing subkeys
+- import and export ASCII-armored public and secret certificates
+- encrypt/decrypt ASCII-armored text messages
+- sign/verify ASCII-armored text messages
+- add/revoke user IDs, add/revoke subkeys, and revoke certificates
+
+See `example/pgp_example.dart` for the supported operations in one program.
+Build the native library first, then run it from the package root:
 ```sh
 dart run example/pgp_example.dart
 ```

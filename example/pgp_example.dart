@@ -3,16 +3,25 @@ import 'package:pgp/pgp.dart';
 void main() {
   final pgp = PGP();
 
-  // Generate a certificate, then evolve it through the key-management API.
-  // Each step returns a new certificate, so the previous handle is disposed.
+  // Generate a certificate with encryption and signing subkeys.
   var cert = pgp.generateKey('someone@example.org');
+  final publicCert = pgp.certificateFromArmored(cert.exportPublicArmored());
+
+  final encrypted = publicCert.encrypt('hello OpenPGP');
+  print(cert.decrypt(encrypted));
+
+  final signed = cert.sign('hello signed OpenPGP');
+  print(publicCert.verify(signed));
+  publicCert.dispose();
+
+  // Key-management methods return a new certificate; dispose the old one.
   cert = _replace(cert, cert.addUserId('other@example.org'));
   cert = _replace(cert, cert.addTransportEncryptionSubkey());
   cert = _replace(cert, cert.revokeUserId('other@example.org'));
-  cert = _replace(cert, cert.revokeSubkey(1));
+  cert = _replace(cert, cert.revokeSubkey(0));
   cert = _replace(cert, cert.revoke());
 
-  print(cert.exportArmored());
+  print(cert.exportSecretArmored());
   cert.dispose();
 }
 
