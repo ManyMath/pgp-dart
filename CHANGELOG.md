@@ -1,3 +1,11 @@
+## 0.0.1-dev.6
+
+- Add common message workflows: encrypt/decrypt ASCII-armored text messages
+  and sign/verify ASCII-armored text messages.
+- Generate certificates with both transport-encryption and signing subkeys.
+- Add explicit public and secret certificate export methods:
+  `exportPublicArmored` and `exportSecretArmored`.
+
 ## 0.0.1-dev.5
 
 - Remove native_toolchain_rust builds.  Drop the Dart Native Assets build hook 
