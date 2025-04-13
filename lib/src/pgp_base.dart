@@ -166,6 +166,40 @@ class Certificate {
 }
 
 class PGP {
+  /// Encrypts [plaintext] to every certificate in [recipients], returning a
+  /// single ASCII-armored OpenPGP message that any recipient can decrypt.
+  ///
+  /// Throws [PgpException] if [recipients] is empty or no certificate has a
+  /// usable transport-encryption subkey.
+  static String encryptToRecipients(
+      List<Certificate> recipients, String plaintext) {
+    if (recipients.isEmpty) throw PgpException(-4); // FFIError::NotFound
+
+    final certsArray =
+        calloc<Pointer<ffi.Certificate>>(recipients.length);
+    for (var i = 0; i < recipients.length; i++) {
+      certsArray[i] = recipients[i].pointer;
+    }
+    final plaintextPtr = plaintext.toNativeUtf8();
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_encrypt_string_to_recipients(
+        certsArray.cast(),
+        recipients.length,
+        plaintextPtr.cast(),
+        out,
+      );
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return result;
+    } finally {
+      calloc.free(certsArray);
+      calloc.free(plaintextPtr);
+      calloc.free(out);
+    }
+  }
+
   /// Generates a new certificate carrying [userId].
   Certificate generateKey(String userId) {
     final userIdPointer = userId.toNativeUtf8();

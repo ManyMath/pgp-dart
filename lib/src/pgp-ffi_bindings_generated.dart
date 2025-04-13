@@ -429,6 +429,42 @@ class PgpFfiBindings {
           int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Pointer<Certificate>>)>();
 
+  /// Encrypt `plaintext` to all `count` recipient certificates and write a single
+  /// ASCII-armored message to `*armored_message`. Any recipient whose private key
+  /// is available can decrypt. Returns NotFound if `count` is zero or no cert
+  /// has a usable transport-encryption subkey.
+  /// Caller must free `*armored_message` with `free()`.
+  ///
+  /// # Safety
+  /// `certs`, `plaintext`, and `armored_message` must be non-null; each element
+  /// of the `certs` array must be a valid Certificate pointer.
+  int pgp_encrypt_string_to_recipients(
+    ffi.Pointer<ffi.Pointer<Certificate>> certs,
+    int count,
+    ffi.Pointer<ffi.Char> plaintext,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored_message,
+  ) {
+    return _pgp_encrypt_string_to_recipients(
+      certs,
+      count,
+      plaintext,
+      armored_message,
+    );
+  }
+
+  late final _pgp_encrypt_string_to_recipientsPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<ffi.Pointer<Certificate>>,
+                  ffi.UintPtr,
+                  ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_encrypt_string_to_recipients');
+  late final _pgp_encrypt_string_to_recipients =
+      _pgp_encrypt_string_to_recipientsPtr.asFunction<
+          int Function(ffi.Pointer<ffi.Pointer<Certificate>>, int,
+              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
   /// Revoke the exact-match user ID, writing the updated cert to `*new_cert`.
   ///
   /// # Safety

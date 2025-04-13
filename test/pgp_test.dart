@@ -138,4 +138,80 @@ void main() {
     withUser.dispose();
     cert.dispose();
   });
+
+  group('encryptToRecipients', () {
+    test('encrypts to two recipients, each can decrypt', () {
+      final alice = pgp.generateKey('alice@example.org');
+      final bob = pgp.generateKey('bob@example.org');
+      final alicePub =
+          pgp.certificateFromArmored(alice.exportPublicArmored());
+      final bobPub = pgp.certificateFromArmored(bob.exportPublicArmored());
+
+      final cipher =
+          PGP.encryptToRecipients([alicePub, bobPub], 'hello both');
+      expect(cipher, contains('-----BEGIN PGP MESSAGE-----'));
+      expect(alice.decrypt(cipher), 'hello both');
+      expect(bob.decrypt(cipher), 'hello both');
+
+      alicePub.dispose();
+      bobPub.dispose();
+      alice.dispose();
+      bob.dispose();
+    });
+
+    test('sender-can-read pattern', () {
+      final sender = pgp.generateKey('sender@example.org');
+      final receiver = pgp.generateKey('receiver@example.org');
+      final senderPub =
+          pgp.certificateFromArmored(sender.exportPublicArmored());
+      final receiverPub =
+          pgp.certificateFromArmored(receiver.exportPublicArmored());
+
+      final cipher =
+          PGP.encryptToRecipients([senderPub, receiverPub], 'sent mail');
+      expect(sender.decrypt(cipher), 'sent mail');
+      expect(receiver.decrypt(cipher), 'sent mail');
+
+      senderPub.dispose();
+      receiverPub.dispose();
+      sender.dispose();
+      receiver.dispose();
+    });
+
+    test('single recipient matches encrypt()', () {
+      final cert = pgp.generateKey('solo@example.org');
+      final pub = pgp.certificateFromArmored(cert.exportPublicArmored());
+
+      final viaMulti = PGP.encryptToRecipients([pub], 'solo message');
+      expect(cert.decrypt(viaMulti), 'solo message');
+
+      pub.dispose();
+      cert.dispose();
+    });
+
+    test('throws PgpException for empty recipient list', () {
+      expect(
+        () => PGP.encryptToRecipients([], 'hello'),
+        throwsA(isA<PgpException>()),
+      );
+    });
+
+    test('non-recipient cannot decrypt', () {
+      final alice = pgp.generateKey('alice@example.org');
+      final bob = pgp.generateKey('bob@example.org');
+      final eve = pgp.generateKey('eve@example.org');
+      final alicePub =
+          pgp.certificateFromArmored(alice.exportPublicArmored());
+      final bobPub = pgp.certificateFromArmored(bob.exportPublicArmored());
+
+      final cipher = PGP.encryptToRecipients([alicePub, bobPub], 'secret');
+      expect(() => eve.decrypt(cipher), throwsA(isA<PgpException>()));
+
+      alicePub.dispose();
+      bobPub.dispose();
+      alice.dispose();
+      bob.dispose();
+      eve.dispose();
+    });
+  });
 }
