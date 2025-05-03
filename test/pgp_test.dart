@@ -139,6 +139,70 @@ void main() {
     cert.dispose();
   });
 
+  group('certificate inspection', () {
+    test('fingerprint is 40-character uppercase hex', () {
+      final cert = pgp.generateKey('alice@example.org');
+      final fp = cert.fingerprint();
+      expect(fp.length, 40);
+      expect(fp, matches(RegExp(r'^[0-9A-F]{40}$')));
+      cert.dispose();
+    });
+
+    test('fingerprint is stable across export/import round-trip', () {
+      final cert = pgp.generateKey('alice@example.org');
+      final fp1 = cert.fingerprint();
+      final parsed =
+          pgp.certificateFromArmored(cert.exportPublicArmored());
+      final fp2 = parsed.fingerprint();
+      expect(fp1, fp2);
+      parsed.dispose();
+      cert.dispose();
+    });
+
+    test('userIds contains the user ID supplied at generation', () {
+      final cert = pgp.generateKey('alice@example.org');
+      expect(cert.userIds(), contains('alice@example.org'));
+      cert.dispose();
+    });
+
+    test('userIds lists multiple user IDs after addUserId', () {
+      final cert = pgp.generateKey('alice@example.org');
+      final updated = cert.addUserId('alias@example.org');
+      final ids = updated.userIds();
+      expect(ids, contains('alice@example.org'));
+      expect(ids, contains('alias@example.org'));
+      updated.dispose();
+      cert.dispose();
+    });
+
+    test('userIds still lists a revoked user ID', () {
+      final cert = pgp.generateKey('alice@example.org');
+      final withExtra = cert.addUserId('alias@example.org');
+      final revoked = withExtra.revokeUserId('alias@example.org');
+      expect(revoked.userIds(), contains('alias@example.org'));
+      revoked.dispose();
+      withExtra.dispose();
+      cert.dispose();
+    });
+
+    test('expiryEpoch returns 0 for a certificate with no expiry', () {
+      final cert = pgp.generateKey('alice@example.org');
+      expect(cert.expiryEpoch(), 0);
+      cert.dispose();
+    });
+
+    test('info() returns consistent CertificateInfo', () {
+      final cert = pgp.generateKey('alice@example.org');
+      final info = cert.info();
+      expect(info.fingerprint, cert.fingerprint());
+      expect(info.userIds, containsAll(cert.userIds()));
+      expect(info.expiryEpoch, cert.expiryEpoch());
+      expect(info.hasExpiry, isFalse);
+      expect(info.expiryDate, isNull);
+      cert.dispose();
+    });
+  });
+
   group('encryptToRecipients', () {
     test('encrypts to two recipients, each can decrypt', () {
       final alice = pgp.generateKey('alice@example.org');

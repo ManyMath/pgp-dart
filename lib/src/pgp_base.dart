@@ -8,6 +8,32 @@ import 'pgp-ffi_bindings_generated.dart' as ffi;
 /// The bindings to the native functions in [nativeLibrary].
 final ffi.PgpFfiBindings _bindings = ffi.PgpFfiBindings(nativeLibrary);
 
+/// A snapshot of certificate metadata returned by [Certificate.info].
+class CertificateInfo {
+  /// 40-character uppercase hex fingerprint (v4 key).
+  final String fingerprint;
+
+  /// All user IDs on the certificate, including revoked ones.
+  final List<String> userIds;
+
+  /// Primary key expiration as seconds since the Unix epoch; 0 means no expiry.
+  final int expiryEpoch;
+
+  const CertificateInfo({
+    required this.fingerprint,
+    required this.userIds,
+    required this.expiryEpoch,
+  });
+
+  /// Whether this certificate has an expiry date set.
+  bool get hasExpiry => expiryEpoch != 0;
+
+  /// The expiry as a UTC [DateTime], or null if no expiry is set.
+  DateTime? get expiryDate => hasExpiry
+      ? DateTime.fromMillisecondsSinceEpoch(expiryEpoch * 1000, isUtc: true)
+      : null;
+}
+
 /// Status code returned by a `pgp-ffi` call.
 class PgpException implements Exception {
   /// The non-zero `FFIError` code returned by `pgp-ffi`.
@@ -148,6 +174,55 @@ class Certificate {
       calloc.free(userIdPointer);
     }
   }
+
+  /// Returns the primary key fingerprint as a 40-character uppercase hex string.
+  String fingerprint() {
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_certificate_fingerprint(_ptr, out);
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return result;
+    } finally {
+      calloc.free(out);
+    }
+  }
+
+  /// Returns all user IDs on this certificate, including revoked ones.
+  List<String> userIds() {
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_certificate_userids(_ptr, out);
+      if (code != 0) throw PgpException(code);
+      final raw = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return raw.isEmpty ? [] : raw.split('\n');
+    } finally {
+      calloc.free(out);
+    }
+  }
+
+  /// Returns the primary key expiration as seconds since the Unix epoch,
+  /// or 0 if the certificate has no expiry.
+  int expiryEpoch() {
+    final out = calloc<Int64>();
+    try {
+      final code = _bindings.pgp_certificate_expiry_epoch(_ptr, out);
+      if (code != 0) throw PgpException(code);
+      return out.value;
+    } finally {
+      calloc.free(out);
+    }
+  }
+
+  /// Returns a [CertificateInfo] snapshot combining fingerprint, user IDs,
+  /// and expiry epoch in a single call.
+  CertificateInfo info() => CertificateInfo(
+        fingerprint: fingerprint(),
+        userIds: userIds(),
+        expiryEpoch: expiryEpoch(),
+      );
 
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);

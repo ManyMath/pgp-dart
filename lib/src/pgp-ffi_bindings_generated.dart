@@ -492,6 +492,78 @@ class PgpFfiBindings {
       _pgp_certificate_revoke_useridPtr.asFunction<
           int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Return the primary key fingerprint as an uppercase hex string.
+  /// Caller must free `*out` with `free()`.
+  ///
+  /// # Safety
+  /// `cert` and `out` must be non-null.
+  int pgp_certificate_fingerprint(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> out,
+  ) {
+    return _pgp_certificate_fingerprint(
+      cert,
+      out,
+    );
+  }
+
+  late final _pgp_certificate_fingerprintPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_fingerprint');
+  late final _pgp_certificate_fingerprint =
+      _pgp_certificate_fingerprintPtr.asFunction<
+          int Function(
+              ffi.Pointer<Certificate>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Return all user IDs as a newline-delimited UTF-8 string.
+  /// Includes revoked and expired user IDs (raw, unfiltered).
+  /// Caller must free `*out` with `free()`.
+  ///
+  /// # Safety
+  /// `cert` and `out` must be non-null.
+  int pgp_certificate_userids(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> out,
+  ) {
+    return _pgp_certificate_userids(
+      cert,
+      out,
+    );
+  }
+
+  late final _pgp_certificate_useridsPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(ffi.Pointer<Certificate>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>>('pgp_certificate_userids');
+  late final _pgp_certificate_userids = _pgp_certificate_useridsPtr.asFunction<
+      int Function(
+          ffi.Pointer<Certificate>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Write the primary key expiration as seconds since the Unix epoch into `*out`.
+  /// Writes 0 if the certificate has no expiry or if the policy check fails.
+  ///
+  /// # Safety
+  /// `cert` and `out` must be non-null.
+  int pgp_certificate_expiry_epoch(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Int64> out,
+  ) {
+    return _pgp_certificate_expiry_epoch(
+      cert,
+      out,
+    );
+  }
+
+  late final _pgp_certificate_expiry_epochPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(ffi.Pointer<Certificate>,
+              ffi.Pointer<ffi.Int64>)>>('pgp_certificate_expiry_epoch');
+  late final _pgp_certificate_expiry_epoch =
+      _pgp_certificate_expiry_epochPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Int64>)>();
 }
 
 final class Certificate extends ffi.Opaque {}
