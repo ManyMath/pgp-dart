@@ -564,6 +564,64 @@ class PgpFfiBindings {
   late final _pgp_certificate_expiry_epoch =
       _pgp_certificate_expiry_epochPtr.asFunction<
           int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Int64>)>();
+
+  /// Generate a new certificate with all secret key material encrypted with
+  /// `passphrase`. Writes the locked certificate to `*new_cert`.
+  ///
+  /// # Safety
+  /// `user_id`, `passphrase`, and `new_cert` must be non-null.
+  int pgp_key_generate_with_passphrase(
+    ffi.Pointer<ffi.Char> user_id,
+    ffi.Pointer<ffi.Char> passphrase,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_key_generate_with_passphrase(
+      user_id,
+      passphrase,
+      new_cert,
+    );
+  }
+
+  late final _pgp_key_generate_with_passphrasePtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_key_generate_with_passphrase');
+  late final _pgp_key_generate_with_passphrase =
+      _pgp_key_generate_with_passphrasePtr.asFunction<
+          int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Decrypt all passphrase-protected secret key material in `cert`, writing
+  /// a new certificate with unencrypted secrets to `*out_cert`.
+  ///
+  /// Returns `Invalid` (-2) if the passphrase is wrong for any key,
+  /// `NotFound` (-4) if `cert` carries no secret material.
+  ///
+  /// # Safety
+  /// `cert`, `passphrase`, and `out_cert` must be non-null.
+  int pgp_certificate_unlock(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> passphrase,
+    ffi.Pointer<ffi.Pointer<Certificate>> out_cert,
+  ) {
+    return _pgp_certificate_unlock(
+      cert,
+      passphrase,
+      out_cert,
+    );
+  }
+
+  late final _pgp_certificate_unlockPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_unlock');
+  late final _pgp_certificate_unlock = _pgp_certificate_unlockPtr.asFunction<
+      int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Pointer<Certificate>>)>();
 }
 
 final class Certificate extends ffi.Opaque {}

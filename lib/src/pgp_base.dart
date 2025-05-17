@@ -224,6 +224,22 @@ class Certificate {
         expiryEpoch: expiryEpoch(),
       );
 
+  /// Unlocks all passphrase-protected secret key material, returning a new
+  /// [Certificate] whose secrets are decrypted in memory.
+  ///
+  /// Throws [PgpException] with code -2 if [passphrase] is wrong, or -4 if
+  /// this certificate carries no secret material.
+  Certificate unlock(String passphrase) {
+    final passphrasePtr = passphrase.toNativeUtf8();
+    try {
+      return _derive(
+        (out) => _bindings.pgp_certificate_unlock(_ptr, passphrasePtr.cast(), out),
+      );
+    } finally {
+      calloc.free(passphrasePtr);
+    }
+  }
+
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);
 
@@ -285,6 +301,24 @@ class PGP {
       return Certificate._(out.value);
     } finally {
       calloc.free(userIdPointer);
+      calloc.free(out);
+    }
+  }
+
+  /// Generates a new certificate carrying [userId] with all secret key
+  /// material encrypted with [passphrase].
+  Certificate generateLockedKey(String userId, String passphrase) {
+    final userIdPtr = userId.toNativeUtf8();
+    final passphrasePtr = passphrase.toNativeUtf8();
+    final out = calloc<Pointer<ffi.Certificate>>();
+    try {
+      final code = _bindings.pgp_key_generate_with_passphrase(
+          userIdPtr.cast(), passphrasePtr.cast(), out);
+      if (code != 0) throw PgpException(code);
+      return Certificate._(out.value);
+    } finally {
+      calloc.free(userIdPtr);
+      calloc.free(passphrasePtr);
       calloc.free(out);
     }
   }

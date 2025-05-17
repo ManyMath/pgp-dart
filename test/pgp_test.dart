@@ -139,6 +139,63 @@ void main() {
     cert.dispose();
   });
 
+  group('passphrase-protected keys', () {
+    test('unlock with correct passphrase enables decrypt', () {
+      final locked = pgp.generateLockedKey('locked@example.org', 'hunter2');
+      final unlocked = locked.unlock('hunter2');
+      final pub =
+          pgp.certificateFromArmored(locked.exportPublicArmored());
+      final cipher = pub.encrypt('secret message');
+      expect(unlocked.decrypt(cipher), 'secret message');
+      pub.dispose();
+      unlocked.dispose();
+      locked.dispose();
+    });
+
+    test('unlock with wrong passphrase throws PgpException(-2)', () {
+      final locked =
+          pgp.generateLockedKey('locked@example.org', 'correcthorse');
+      expect(
+        () => locked.unlock('wrongpassphrase'),
+        throwsA(isA<PgpException>().having((e) => e.code, 'code', -2)),
+      );
+      locked.dispose();
+    });
+
+    test('unlock on public-only cert throws PgpException(-4)', () {
+      final cert = pgp.generateKey('someone@example.org');
+      final pub =
+          pgp.certificateFromArmored(cert.exportPublicArmored());
+      expect(
+        () => pub.unlock('anypassphrase'),
+        throwsA(isA<PgpException>().having((e) => e.code, 'code', -4)),
+      );
+      pub.dispose();
+      cert.dispose();
+    });
+
+    test('unlock then sign produces a verifiable message', () {
+      final locked =
+          pgp.generateLockedKey('signer@example.org', 's3cr3t');
+      final unlocked = locked.unlock('s3cr3t');
+      final pub =
+          pgp.certificateFromArmored(locked.exportPublicArmored());
+      final signed = unlocked.sign('authenticated text');
+      expect(pub.verify(signed), 'authenticated text');
+      pub.dispose();
+      unlocked.dispose();
+      locked.dispose();
+    });
+
+    test('unlock on already-unlocked cert is a no-op', () {
+      final cert = pgp.generateKey('someone@example.org');
+      final same = cert.unlock('');
+      expect(same.pointer.address, isNonZero);
+      same.dispose();
+      cert.dispose();
+    });
+  });
+
   group('certificate inspection', () {
     test('fingerprint is 40-character uppercase hex', () {
       final cert = pgp.generateKey('alice@example.org');
