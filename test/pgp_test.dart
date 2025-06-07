@@ -139,6 +139,55 @@ void main() {
     cert.dispose();
   });
 
+  group('detached signatures', () {
+    test('signDetached returns an armored signature block', () {
+      final cert = pgp.generateKey('someone@example.org');
+      final sig = cert.signDetached('hello detached OpenPGP');
+      expect(sig, contains('-----BEGIN PGP SIGNATURE-----'));
+      cert.dispose();
+    });
+
+    test('signDetached does not wrap content in a PGP Message', () {
+      final cert = pgp.generateKey('someone@example.org');
+      final sig = cert.signDetached('hello detached OpenPGP');
+      expect(sig, isNot(contains('-----BEGIN PGP MESSAGE-----')));
+      cert.dispose();
+    });
+
+    test('verifyDetached round-trips through a public certificate', () {
+      final cert = pgp.generateKey('someone@example.org');
+      final pub =
+          pgp.certificateFromArmored(cert.exportPublicArmored());
+      const plain = 'hello detached OpenPGP';
+      final sig = cert.signDetached(plain);
+      expect(pub.verifyDetached(plain, sig), isTrue);
+      pub.dispose();
+      cert.dispose();
+    });
+
+    test('verifyDetached rejects a different certificate', () {
+      final cert = pgp.generateKey('someone@example.org');
+      final other = pgp.generateKey('other@example.org');
+      final sig = cert.signDetached('hello detached OpenPGP');
+      expect(
+        () => other.verifyDetached('hello detached OpenPGP', sig),
+        throwsA(isA<PgpException>()),
+      );
+      other.dispose();
+      cert.dispose();
+    });
+
+    test('verifyDetached rejects tampered content', () {
+      final cert = pgp.generateKey('someone@example.org');
+      final sig = cert.signDetached('hello detached OpenPGP');
+      expect(
+        () => cert.verifyDetached('tampered content', sig),
+        throwsA(isA<PgpException>()),
+      );
+      cert.dispose();
+    });
+  });
+
   group('passphrase-protected keys', () {
     test('unlock with correct passphrase enables decrypt', () {
       final locked = pgp.generateLockedKey('locked@example.org', 'hunter2');

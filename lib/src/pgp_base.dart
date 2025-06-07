@@ -224,6 +224,46 @@ class Certificate {
         expiryEpoch: expiryEpoch(),
       );
 
+  /// Signs [plaintext] with this secret certificate, returning an ASCII-armored
+  /// detached signature (BEGIN PGP SIGNATURE). The plaintext is not modified.
+  String signDetached(String plaintext) => _transformString(
+        plaintext,
+        _bindings.pgp_certificate_sign_detached,
+      );
+
+  /// Verifies [armoredSig] against [plaintext] using this certificate.
+  ///
+  /// Returns true if the signature is valid. Throws [PgpException] if
+  /// verification fails or the signature is malformed.
+  bool verifyDetached(String plaintext, String armoredSig) {
+    _verifyDetachedStrings(
+      plaintext,
+      armoredSig,
+      _bindings.pgp_certificate_verify_detached,
+    );
+    return true;
+  }
+
+  void _verifyDetachedStrings(
+    String input1,
+    String input2,
+    int Function(
+      Pointer<ffi.Certificate>,
+      Pointer<Char>,
+      Pointer<Char>,
+    ) call,
+  ) {
+    final p1 = input1.toNativeUtf8();
+    final p2 = input2.toNativeUtf8();
+    try {
+      final code = call(_ptr, p1.cast(), p2.cast());
+      if (code != 0) throw PgpException(code);
+    } finally {
+      calloc.free(p1);
+      calloc.free(p2);
+    }
+  }
+
   /// Unlocks all passphrase-protected secret key material, returning a new
   /// [Certificate] whose secrets are decrypted in memory.
   ///

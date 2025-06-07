@@ -622,6 +622,60 @@ class PgpFfiBindings {
   late final _pgp_certificate_unlock = _pgp_certificate_unlockPtr.asFunction<
       int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
           ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Sign `plaintext` with the certificate and write an ASCII-armored detached
+  /// signature (BEGIN PGP SIGNATURE) to `*armored_sig`. The plaintext is left
+  /// untouched. Caller must free `*armored_sig` with `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `plaintext`, and `armored_sig` must be non-null.
+  int pgp_certificate_sign_detached(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> plaintext,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored_sig,
+  ) {
+    return _pgp_certificate_sign_detached(
+      cert,
+      plaintext,
+      armored_sig,
+    );
+  }
+
+  late final _pgp_certificate_sign_detachedPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_sign_detached');
+  late final _pgp_certificate_sign_detached =
+      _pgp_certificate_sign_detachedPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Verify a detached signature `armored_sig` against `plaintext` using the
+  /// certificate. Returns 0 if valid, negative on failure.
+  ///
+  /// # Safety
+  /// `cert`, `plaintext`, and `armored_sig` must be non-null.
+  int pgp_certificate_verify_detached(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> plaintext,
+    ffi.Pointer<ffi.Char> armored_sig,
+  ) {
+    return _pgp_certificate_verify_detached(
+      cert,
+      plaintext,
+      armored_sig,
+    );
+  }
+
+  late final _pgp_certificate_verify_detachedPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>)>>('pgp_certificate_verify_detached');
+  late final _pgp_certificate_verify_detached =
+      _pgp_certificate_verify_detachedPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>)>();
 }
 
 final class Certificate extends ffi.Opaque {}
