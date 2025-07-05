@@ -139,6 +139,62 @@ void main() {
     cert.dispose();
   });
 
+  group('key expiration', () {
+    test('generateKeyWithExpiry returns a valid certificate handle', () {
+      final cert = pgp.generateKeyWithExpiry(
+          'alice@example.org', const Duration(hours: 1));
+      expect(cert.pointer.address, isNonZero);
+      cert.dispose();
+    });
+
+    test('generateKeyWithExpiry with Duration.zero behaves like generateKey', () {
+      final cert =
+          pgp.generateKeyWithExpiry('alice@example.org', Duration.zero);
+      final encrypted = cert.encrypt('hello');
+      expect(encrypted, contains('-----BEGIN PGP MESSAGE-----'));
+      cert.dispose();
+    });
+
+    test('generateKeyWithExpiry with null validity behaves like generateKey', () {
+      final cert = pgp.generateKeyWithExpiry('alice@example.org', null);
+      expect(cert.pointer.address, isNonZero);
+      cert.dispose();
+    });
+
+    test('generateKeyWithExpiry expiry is readable via expiryEpoch', () {
+      final cert = pgp.generateKeyWithExpiry(
+          'alice@example.org', const Duration(hours: 1));
+      expect(cert.expiryEpoch(), greaterThan(0));
+      cert.dispose();
+    });
+
+    test('setExpiry returns an updated certificate handle', () {
+      final cert = pgp.generateKey('alice@example.org');
+      final updated = cert.setExpiry(const Duration(hours: 2));
+      expect(updated.pointer.address, isNonZero);
+      updated.dispose();
+      cert.dispose();
+    });
+
+    test('setExpiry with null clears the expiry', () {
+      final cert = pgp.generateKey('alice@example.org');
+      final withExpiry = cert.setExpiry(const Duration(hours: 2));
+      final cleared = withExpiry.setExpiry(null);
+      expect(cleared.expiryEpoch(), 0);
+      cleared.dispose();
+      withExpiry.dispose();
+      cert.dispose();
+    });
+
+    test('key with far-future expiry can encrypt and decrypt', () {
+      final cert = pgp.generateKeyWithExpiry(
+          'alice@example.org', const Duration(days: 365));
+      final encrypted = cert.encrypt('expiring key test');
+      expect(cert.decrypt(encrypted), 'expiring key test');
+      cert.dispose();
+    });
+  });
+
   group('detached signatures', () {
     test('signDetached returns an armored signature block', () {
       final cert = pgp.generateKey('someone@example.org');

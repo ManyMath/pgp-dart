@@ -280,6 +280,16 @@ class Certificate {
     }
   }
 
+  /// Updates the expiry on every key in this certificate, returning a new
+  /// [Certificate]. Pass null to clear the expiry (keys become permanent).
+  /// The receiver is unchanged and must be disposed separately.
+  Certificate setExpiry(Duration? validity) {
+    final secs =
+        (validity == null || validity == Duration.zero) ? 0 : validity.inSeconds;
+    return _derive(
+        (out) => _bindings.pgp_certificate_set_expiry(_ptr, secs, out));
+  }
+
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);
 
@@ -341,6 +351,24 @@ class PGP {
       return Certificate._(out.value);
     } finally {
       calloc.free(userIdPointer);
+      calloc.free(out);
+    }
+  }
+
+  /// Generates a new certificate carrying [userId] with an optional validity
+  /// period. Pass null or [Duration.zero] for no expiry.
+  Certificate generateKeyWithExpiry(String userId, Duration? validity) {
+    final userIdPtr = userId.toNativeUtf8();
+    final out = calloc<Pointer<ffi.Certificate>>();
+    try {
+      final secs =
+          (validity == null || validity == Duration.zero) ? 0 : validity.inSeconds;
+      final code = _bindings.pgp_key_generate_with_expiry(
+          userIdPtr.cast(), secs, out);
+      if (code != 0) throw PgpException(code);
+      return Certificate._(out.value);
+    } finally {
+      calloc.free(userIdPtr);
       calloc.free(out);
     }
   }

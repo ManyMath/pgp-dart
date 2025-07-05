@@ -676,6 +676,63 @@ class PgpFfiBindings {
       _pgp_certificate_verify_detachedPtr.asFunction<
           int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Char>)>();
+
+  /// Generate a new certificate carrying `user_id` with an optional validity
+  /// period. `validity_seconds == 0` means no expiry.
+  /// Writes the new certificate to `*new_cert`. Caller must free with
+  /// `pgp_certificate_free`.
+  ///
+  /// # Safety
+  /// `user_id` and `new_cert` must be non-null.
+  int pgp_key_generate_with_expiry(
+    ffi.Pointer<ffi.Char> user_id,
+    int validity_seconds,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_key_generate_with_expiry(
+      user_id,
+      validity_seconds,
+      new_cert,
+    );
+  }
+
+  late final _pgp_key_generate_with_expiryPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<ffi.Char>, ffi.Uint64,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_key_generate_with_expiry');
+  late final _pgp_key_generate_with_expiry =
+      _pgp_key_generate_with_expiryPtr.asFunction<
+          int Function(ffi.Pointer<ffi.Char>, int,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Update the expiry on every key in the certificate. `validity_seconds == 0`
+  /// clears the expiry. Writes the updated certificate to `*new_cert`. Caller
+  /// must free both the original and the returned certificate separately.
+  ///
+  /// # Safety
+  /// `cert` and `new_cert` must be non-null.
+  int pgp_certificate_set_expiry(
+    ffi.Pointer<Certificate> cert,
+    int validity_seconds,
+    ffi.Pointer<ffi.Pointer<Certificate>> new_cert,
+  ) {
+    return _pgp_certificate_set_expiry(
+      cert,
+      validity_seconds,
+      new_cert,
+    );
+  }
+
+  late final _pgp_certificate_set_expiryPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>, ffi.Uint64,
+                  ffi.Pointer<ffi.Pointer<Certificate>>)>>(
+      'pgp_certificate_set_expiry');
+  late final _pgp_certificate_set_expiry =
+      _pgp_certificate_set_expiryPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, int,
+              ffi.Pointer<ffi.Pointer<Certificate>>)>();
 }
 
 final class Certificate extends ffi.Opaque {}
