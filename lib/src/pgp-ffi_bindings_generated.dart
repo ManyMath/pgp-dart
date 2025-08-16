@@ -733,6 +733,88 @@ class PgpFfiBindings {
       _pgp_certificate_set_expiryPtr.asFunction<
           int Function(ffi.Pointer<Certificate>, int,
               ffi.Pointer<ffi.Pointer<Certificate>>)>();
+
+  /// Encrypt `plaintext` to all `count` recipient certificates and sign the
+  /// message with `signer_cert`. Writes a single ASCII-armored message to
+  /// `*armored_message`. Caller must free `*armored_message` with `free()`.
+  ///
+  /// # Safety
+  /// All pointers must be non-null; each element of `recipient_certs` must be a
+  /// valid Certificate pointer.
+  int pgp_encrypt_and_sign_string(
+    ffi.Pointer<Certificate> signer_cert,
+    ffi.Pointer<ffi.Pointer<Certificate>> recipient_certs,
+    int count,
+    ffi.Pointer<ffi.Char> plaintext,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored_message,
+  ) {
+    return _pgp_encrypt_and_sign_string(
+      signer_cert,
+      recipient_certs,
+      count,
+      plaintext,
+      armored_message,
+    );
+  }
+
+  late final _pgp_encrypt_and_sign_stringPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Pointer<Certificate>>,
+                  ffi.UintPtr,
+                  ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_encrypt_and_sign_string');
+  late final _pgp_encrypt_and_sign_string =
+      _pgp_encrypt_and_sign_stringPtr.asFunction<
+          int Function(
+              ffi.Pointer<Certificate>,
+              ffi.Pointer<ffi.Pointer<Certificate>>,
+              int,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Decrypt an ASCII-armored message with `decrypt_cert` and verify its
+  /// signature against `verify_cert`. Writes the plaintext to `*plaintext_out`
+  /// and the signer's fingerprint to `*fingerprint_out`. Both must be freed with
+  /// `free()`. Returns `Failed` (-3) if the message carries no valid signature.
+  ///
+  /// # Safety
+  /// All pointers must be non-null.
+  int pgp_decrypt_and_verify_string(
+    ffi.Pointer<Certificate> decrypt_cert,
+    ffi.Pointer<Certificate> verify_cert,
+    ffi.Pointer<ffi.Char> armored_message,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> plaintext_out,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> fingerprint_out,
+  ) {
+    return _pgp_decrypt_and_verify_string(
+      decrypt_cert,
+      verify_cert,
+      armored_message,
+      plaintext_out,
+      fingerprint_out,
+    );
+  }
+
+  late final _pgp_decrypt_and_verify_stringPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<Certificate>,
+                  ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_decrypt_and_verify_string');
+  late final _pgp_decrypt_and_verify_string =
+      _pgp_decrypt_and_verify_stringPtr.asFunction<
+          int Function(
+              ffi.Pointer<Certificate>,
+              ffi.Pointer<Certificate>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 }
 
 final class Certificate extends ffi.Opaque {}

@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
@@ -32,6 +33,20 @@ class CertificateInfo {
   DateTime? get expiryDate => hasExpiry
       ? DateTime.fromMillisecondsSinceEpoch(expiryEpoch * 1000, isUtc: true)
       : null;
+}
+
+/// Plaintext and signer fingerprint returned by [Certificate.decryptAndVerify].
+class SignedPlaintext {
+  /// The decrypted plaintext.
+  final String plaintext;
+
+  /// 40-character uppercase hex fingerprint of the signing subkey.
+  final String signerFingerprint;
+
+  const SignedPlaintext({
+    required this.plaintext,
+    required this.signerFingerprint,
+  });
 }
 
 /// Status code returned by a `pgp-ffi` call.
@@ -290,6 +305,36 @@ class Certificate {
         (out) => _bindings.pgp_certificate_set_expiry(_ptr, secs, out));
   }
 
+  /// Decrypts and verifies a signed+encrypted [message] produced by
+  /// [PGP.encryptAndSign]. [verifyCert] is the signer's public certificate.
+  ///
+  /// Returns [SignedPlaintext] with the plaintext and the signing subkey
+  /// fingerprint. Throws [PgpException] if decryption or verification fails.
+  SignedPlaintext decryptAndVerify(String message, Certificate verifyCert) {
+    final msgPtr = message.toNativeUtf8();
+    final plaintextOut = calloc<Pointer<Char>>();
+    final fpOut = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_decrypt_and_verify_string(
+        _ptr,
+        verifyCert._ptr,
+        msgPtr.cast(),
+        plaintextOut,
+        fpOut,
+      );
+      if (code != 0) throw PgpException(code);
+      final pt = plaintextOut.value.cast<Utf8>().toDartString();
+      final fp = fpOut.value.cast<Utf8>().toDartString();
+      calloc.free(plaintextOut.value);
+      calloc.free(fpOut.value);
+      return SignedPlaintext(plaintext: pt, signerFingerprint: fp);
+    } finally {
+      calloc.free(msgPtr);
+      calloc.free(plaintextOut);
+      calloc.free(fpOut);
+    }
+  }
+
   /// Frees the native certificate.  The handle must not be used afterwards.
   void dispose() => _bindings.pgp_certificate_free(_ptr);
 
@@ -325,6 +370,43 @@ class PGP {
     final out = calloc<Pointer<Char>>();
     try {
       final code = _bindings.pgp_encrypt_string_to_recipients(
+        certsArray.cast(),
+        recipients.length,
+        plaintextPtr.cast(),
+        out,
+      );
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return result;
+    } finally {
+      calloc.free(certsArray);
+      calloc.free(plaintextPtr);
+      calloc.free(out);
+    }
+  }
+
+  /// Encrypts [plaintext] to all [recipients] and signs with [signer].
+  ///
+  /// Returns a single ASCII-armored message. Any recipient can call
+  /// [Certificate.decryptAndVerify] with the signer's public certificate to
+  /// recover the plaintext and confirm authenticity.
+  static String encryptAndSign(
+    Certificate signer,
+    List<Certificate> recipients,
+    String plaintext,
+  ) {
+    if (recipients.isEmpty) throw PgpException(-4);
+
+    final certsArray = calloc<Pointer<ffi.Certificate>>(recipients.length);
+    for (var i = 0; i < recipients.length; i++) {
+      certsArray[i] = recipients[i].pointer;
+    }
+    final plaintextPtr = plaintext.toNativeUtf8();
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_encrypt_and_sign_string(
+        signer._ptr,
         certsArray.cast(),
         recipients.length,
         plaintextPtr.cast(),

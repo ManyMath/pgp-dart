@@ -365,6 +365,81 @@ void main() {
     });
   });
 
+  group('signed+encrypted messages', () {
+    test('encryptAndSign round-trips through decryptAndVerify', () {
+      final alice = pgp.generateKey('alice@example.org');
+      final bob = pgp.generateKey('bob@example.org');
+      final alicePub = pgp.certificateFromArmored(alice.exportPublicArmored());
+      final bobPub = pgp.certificateFromArmored(bob.exportPublicArmored());
+
+      final cipher = PGP.encryptAndSign(alice, [bobPub], 'hello signed+enc');
+      expect(cipher, contains('-----BEGIN PGP MESSAGE-----'));
+
+      final result = bob.decryptAndVerify(cipher, alicePub);
+      expect(result.plaintext, 'hello signed+enc');
+      expect(result.signerFingerprint.length, 40);
+      expect(result.signerFingerprint, matches(RegExp(r'^[0-9A-F]{40}$')));
+
+      alicePub.dispose();
+      bobPub.dispose();
+      alice.dispose();
+      bob.dispose();
+    });
+
+    test('encryptAndSign to multiple recipients', () {
+      final alice = pgp.generateKey('alice@example.org');
+      final bob = pgp.generateKey('bob@example.org');
+      final carol = pgp.generateKey('carol@example.org');
+      final alicePub = pgp.certificateFromArmored(alice.exportPublicArmored());
+      final bobPub = pgp.certificateFromArmored(bob.exportPublicArmored());
+      final carolPub = pgp.certificateFromArmored(carol.exportPublicArmored());
+
+      final cipher =
+          PGP.encryptAndSign(alice, [bobPub, carolPub], 'group message');
+      final r1 = bob.decryptAndVerify(cipher, alicePub);
+      final r2 = carol.decryptAndVerify(cipher, alicePub);
+      expect(r1.plaintext, 'group message');
+      expect(r2.plaintext, 'group message');
+      expect(r1.signerFingerprint, r2.signerFingerprint);
+
+      alicePub.dispose();
+      bobPub.dispose();
+      carolPub.dispose();
+      alice.dispose();
+      bob.dispose();
+      carol.dispose();
+    });
+
+    test('decryptAndVerify throws when wrong verify cert is supplied', () {
+      final alice = pgp.generateKey('alice@example.org');
+      final bob = pgp.generateKey('bob@example.org');
+      final eve = pgp.generateKey('eve@example.org');
+      final bobPub = pgp.certificateFromArmored(bob.exportPublicArmored());
+      final evePub = pgp.certificateFromArmored(eve.exportPublicArmored());
+
+      final cipher = PGP.encryptAndSign(alice, [bobPub], 'secret');
+      expect(
+        () => bob.decryptAndVerify(cipher, evePub),
+        throwsA(isA<PgpException>()),
+      );
+
+      bobPub.dispose();
+      evePub.dispose();
+      alice.dispose();
+      bob.dispose();
+      eve.dispose();
+    });
+
+    test('encryptAndSign throws for empty recipient list', () {
+      final alice = pgp.generateKey('alice@example.org');
+      expect(
+        () => PGP.encryptAndSign(alice, [], 'hello'),
+        throwsA(isA<PgpException>()),
+      );
+      alice.dispose();
+    });
+  });
+
   group('encryptToRecipients', () {
     test('encrypts to two recipients, each can decrypt', () {
       final alice = pgp.generateKey('alice@example.org');
