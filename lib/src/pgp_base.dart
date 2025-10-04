@@ -305,6 +305,90 @@ class Certificate {
         (out) => _bindings.pgp_certificate_set_expiry(_ptr, secs, out));
   }
 
+  /// Encrypts [data] bytes to this certificate, returning an ASCII-armored
+  /// message. Useful for non-UTF-8 payloads such as binary files.
+  String encryptBytes(Uint8List data) {
+    final dataPtr = calloc<Uint8>(data.length.clamp(1, data.length + 1));
+    for (var i = 0; i < data.length; i++) {
+      dataPtr[i] = data[i];
+    }
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_certificate_encrypt_bytes(
+          _ptr, dataPtr.cast(), data.length, out);
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return result;
+    } finally {
+      calloc.free(dataPtr);
+      calloc.free(out);
+    }
+  }
+
+  /// Decrypts an ASCII-armored [message] with this secret certificate,
+  /// returning the raw plaintext bytes.
+  Uint8List decryptBytes(String message) {
+    final msgPtr = message.toNativeUtf8();
+    final outPtr = calloc<Pointer<Uint8>>();
+    final outLen = calloc<UintPtr>();
+    try {
+      final code = _bindings.pgp_certificate_decrypt_bytes(
+          _ptr, msgPtr.cast(), outPtr, outLen);
+      if (code != 0) throw PgpException(code);
+      final len = outLen.value;
+      final result = Uint8List.fromList(outPtr.value.asTypedList(len));
+      calloc.free(outPtr.value);
+      return result;
+    } finally {
+      calloc.free(msgPtr);
+      calloc.free(outPtr);
+      calloc.free(outLen);
+    }
+  }
+
+  /// Signs [data] bytes with this secret certificate, returning an
+  /// ASCII-armored signed message.
+  String signBytes(Uint8List data) {
+    final dataPtr = calloc<Uint8>(data.length.clamp(1, data.length + 1));
+    for (var i = 0; i < data.length; i++) {
+      dataPtr[i] = data[i];
+    }
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_certificate_sign_bytes(
+          _ptr, dataPtr.cast(), data.length, out);
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return result;
+    } finally {
+      calloc.free(dataPtr);
+      calloc.free(out);
+    }
+  }
+
+  /// Verifies an armored signed [message] with this certificate, returning
+  /// the raw verified bytes.
+  Uint8List verifyBytes(String message) {
+    final msgPtr = message.toNativeUtf8();
+    final outPtr = calloc<Pointer<Uint8>>();
+    final outLen = calloc<UintPtr>();
+    try {
+      final code = _bindings.pgp_certificate_verify_bytes(
+          _ptr, msgPtr.cast(), outPtr, outLen);
+      if (code != 0) throw PgpException(code);
+      final len = outLen.value;
+      final result = Uint8List.fromList(outPtr.value.asTypedList(len));
+      calloc.free(outPtr.value);
+      return result;
+    } finally {
+      calloc.free(msgPtr);
+      calloc.free(outPtr);
+      calloc.free(outLen);
+    }
+  }
+
   /// Decrypts and verifies a signed+encrypted [message] produced by
   /// [PGP.encryptAndSign]. [verifyCert] is the signer's public certificate.
   ///
@@ -382,6 +466,40 @@ class PGP {
     } finally {
       calloc.free(certsArray);
       calloc.free(plaintextPtr);
+      calloc.free(out);
+    }
+  }
+
+  /// Encrypts raw [data] bytes to all [recipients], returning an
+  /// ASCII-armored message any recipient can [Certificate.decryptBytes].
+  static String encryptBytesToRecipients(
+      List<Certificate> recipients, Uint8List data) {
+    if (recipients.isEmpty) throw PgpException(-4);
+
+    final certsArray = calloc<Pointer<ffi.Certificate>>(recipients.length);
+    for (var i = 0; i < recipients.length; i++) {
+      certsArray[i] = recipients[i].pointer;
+    }
+    final dataPtr = calloc<Uint8>(data.length.clamp(1, data.length + 1));
+    for (var i = 0; i < data.length; i++) {
+      dataPtr[i] = data[i];
+    }
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_encrypt_bytes_to_recipients(
+        certsArray.cast(),
+        recipients.length,
+        dataPtr.cast(),
+        data.length,
+        out,
+      );
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return result;
+    } finally {
+      calloc.free(certsArray);
+      calloc.free(dataPtr);
       calloc.free(out);
     }
   }

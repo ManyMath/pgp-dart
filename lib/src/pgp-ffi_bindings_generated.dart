@@ -815,6 +815,182 @@ class PgpFfiBindings {
               ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Pointer<ffi.Char>>,
               ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Encrypt `data` (raw bytes, `len` long) to the certificate and write an
+  /// ASCII-armored message to `*armored_message`. Caller must free
+  /// `*armored_message` with `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `data`, and `armored_message` must be non-null; `data` must point
+  /// to at least `len` valid bytes.
+  int pgp_certificate_encrypt_bytes(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Uint8> data,
+    int len,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored_message,
+  ) {
+    return _pgp_certificate_encrypt_bytes(
+      cert,
+      data,
+      len,
+      armored_message,
+    );
+  }
+
+  late final _pgp_certificate_encrypt_bytesPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Uint8>,
+                  ffi.UintPtr,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_encrypt_bytes');
+  late final _pgp_certificate_encrypt_bytes =
+      _pgp_certificate_encrypt_bytesPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Uint8>, int,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Decrypt an ASCII-armored message using the certificate and write the raw
+  /// plaintext bytes to `*plaintext_out` (length in `*plaintext_len`). Caller
+  /// must free `*plaintext_out` with `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `armored_message`, `plaintext_out`, and `plaintext_len` must be
+  /// non-null.
+  int pgp_certificate_decrypt_bytes(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> armored_message,
+    ffi.Pointer<ffi.Pointer<ffi.Uint8>> plaintext_out,
+    ffi.Pointer<ffi.UintPtr> plaintext_len,
+  ) {
+    return _pgp_certificate_decrypt_bytes(
+      cert,
+      armored_message,
+      plaintext_out,
+      plaintext_len,
+    );
+  }
+
+  late final _pgp_certificate_decrypt_bytesPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(
+              ffi.Pointer<Certificate>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Uint8>>,
+              ffi.Pointer<ffi.UintPtr>)>>('pgp_certificate_decrypt_bytes');
+  late final _pgp_certificate_decrypt_bytes =
+      _pgp_certificate_decrypt_bytesPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Uint8>>, ffi.Pointer<ffi.UintPtr>)>();
+
+  /// Sign `data` (raw bytes, `len` long) with the certificate and write an
+  /// ASCII-armored signed message to `*armored_message`. Caller must free
+  /// `*armored_message` with `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `data`, and `armored_message` must be non-null; `data` must point
+  /// to at least `len` valid bytes.
+  int pgp_certificate_sign_bytes(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Uint8> data,
+    int len,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored_message,
+  ) {
+    return _pgp_certificate_sign_bytes(
+      cert,
+      data,
+      len,
+      armored_message,
+    );
+  }
+
+  late final _pgp_certificate_sign_bytesPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Uint8>,
+                  ffi.UintPtr,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_sign_bytes');
+  late final _pgp_certificate_sign_bytes =
+      _pgp_certificate_sign_bytesPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Uint8>, int,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Verify an ASCII-armored signed message and write the verified raw bytes to
+  /// `*plaintext_out` (length in `*plaintext_len`). Caller must free
+  /// `*plaintext_out` with `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `armored_message`, `plaintext_out`, and `plaintext_len` must be
+  /// non-null.
+  int pgp_certificate_verify_bytes(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> armored_message,
+    ffi.Pointer<ffi.Pointer<ffi.Uint8>> plaintext_out,
+    ffi.Pointer<ffi.UintPtr> plaintext_len,
+  ) {
+    return _pgp_certificate_verify_bytes(
+      cert,
+      armored_message,
+      plaintext_out,
+      plaintext_len,
+    );
+  }
+
+  late final _pgp_certificate_verify_bytesPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int32 Function(
+              ffi.Pointer<Certificate>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Uint8>>,
+              ffi.Pointer<ffi.UintPtr>)>>('pgp_certificate_verify_bytes');
+  late final _pgp_certificate_verify_bytes =
+      _pgp_certificate_verify_bytesPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Uint8>>, ffi.Pointer<ffi.UintPtr>)>();
+
+  /// Encrypt `data` (raw bytes, `len` long) to all `count` recipient certificates
+  /// and write an ASCII-armored message to `*armored_message`. Caller must free
+  /// `*armored_message` with `free()`.
+  ///
+  /// # Safety
+  /// `certs`, `data`, and `armored_message` must be non-null; `data` must point
+  /// to at least `len` valid bytes; each element of `certs` must be a valid
+  /// Certificate pointer.
+  int pgp_encrypt_bytes_to_recipients(
+    ffi.Pointer<ffi.Pointer<Certificate>> certs,
+    int count,
+    ffi.Pointer<ffi.Uint8> data,
+    int len,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored_message,
+  ) {
+    return _pgp_encrypt_bytes_to_recipients(
+      certs,
+      count,
+      data,
+      len,
+      armored_message,
+    );
+  }
+
+  late final _pgp_encrypt_bytes_to_recipientsPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(
+                  ffi.Pointer<ffi.Pointer<Certificate>>,
+                  ffi.UintPtr,
+                  ffi.Pointer<ffi.Uint8>,
+                  ffi.UintPtr,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_encrypt_bytes_to_recipients');
+  late final _pgp_encrypt_bytes_to_recipients =
+      _pgp_encrypt_bytes_to_recipientsPtr.asFunction<
+          int Function(
+              ffi.Pointer<ffi.Pointer<Certificate>>,
+              int,
+              ffi.Pointer<ffi.Uint8>,
+              int,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 }
 
 final class Certificate extends ffi.Opaque {}

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:pgp/pgp.dart';
 import 'package:test/test.dart';
 
@@ -437,6 +439,81 @@ void main() {
         throwsA(isA<PgpException>()),
       );
       alice.dispose();
+    });
+  });
+
+  group('binary data (bytes API)', () {
+    test('encryptBytes and decryptBytes round-trip arbitrary bytes', () {
+      final cert = pgp.generateKey('bytes@example.org');
+      final pub = pgp.certificateFromArmored(cert.exportPublicArmored());
+
+      final original = Uint8List.fromList([0, 1, 2, 255, 254, 128, 0, 42]);
+      final cipher = pub.encryptBytes(original);
+      expect(cipher, contains('-----BEGIN PGP MESSAGE-----'));
+
+      final recovered = cert.decryptBytes(cipher);
+      expect(recovered, original);
+
+      pub.dispose();
+      cert.dispose();
+    });
+
+    test('encryptBytes handles zero-length data', () {
+      final cert = pgp.generateKey('empty@example.org');
+      final pub = pgp.certificateFromArmored(cert.exportPublicArmored());
+
+      final cipher = pub.encryptBytes(Uint8List(0));
+      final recovered = cert.decryptBytes(cipher);
+      expect(recovered, isEmpty);
+
+      pub.dispose();
+      cert.dispose();
+    });
+
+    test('signBytes and verifyBytes round-trip binary content', () {
+      final cert = pgp.generateKey('bsign@example.org');
+      final pub = pgp.certificateFromArmored(cert.exportPublicArmored());
+
+      final data = Uint8List.fromList([0xDE, 0xAD, 0xBE, 0xEF]);
+      final signed = cert.signBytes(data);
+      final verified = pub.verifyBytes(signed);
+      expect(verified, data);
+
+      pub.dispose();
+      cert.dispose();
+    });
+
+    test('verifyBytes rejects a wrong certificate', () {
+      final cert = pgp.generateKey('btamper@example.org');
+      final other = pgp.generateKey('btamper2@example.org');
+      final otherPub = pgp.certificateFromArmored(other.exportPublicArmored());
+
+      final signed = cert.signBytes(Uint8List.fromList([1, 2, 3]));
+      expect(
+        () => otherPub.verifyBytes(signed),
+        throwsA(isA<PgpException>()),
+      );
+
+      otherPub.dispose();
+      other.dispose();
+      cert.dispose();
+    });
+
+    test('encryptBytesToRecipients multi-recipient round-trips', () {
+      final alice = pgp.generateKey('alice@example.org');
+      final bob = pgp.generateKey('bob@example.org');
+      final alicePub = pgp.certificateFromArmored(alice.exportPublicArmored());
+      final bobPub = pgp.certificateFromArmored(bob.exportPublicArmored());
+
+      final data = Uint8List.fromList([10, 20, 30, 40, 50]);
+      final cipher = PGP.encryptBytesToRecipients([alicePub, bobPub], data);
+      expect(alice.decryptBytes(cipher), data);
+      expect(bob.decryptBytes(cipher), data);
+
+      alicePub.dispose();
+      bobPub.dispose();
+      alice.dispose();
+      bob.dispose();
     });
   });
 
