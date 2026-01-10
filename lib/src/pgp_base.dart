@@ -389,6 +389,21 @@ class Certificate {
     }
   }
 
+  /// Signs [plaintext] using the Cleartext Signature Framework (RFC 4880 section 7),
+  /// returning a "-----BEGIN PGP SIGNED MESSAGE-----" block. The plaintext is
+  /// human-readable inside the block.
+  String signCleartext(String plaintext) => _transformString(
+        plaintext,
+        _bindings.pgp_certificate_sign_cleartext,
+      );
+
+  /// Verifies a cleartext-signed [message] (BEGIN PGP SIGNED MESSAGE) using
+  /// this certificate. Returns the plaintext if the signature is valid.
+  String verifyCleartext(String message) => _transformString(
+        message,
+        _bindings.pgp_certificate_verify_cleartext,
+      );
+
   /// Decrypts and verifies a signed+encrypted [message] produced by
   /// [PGP.encryptAndSign]. [verifyCert] is the signer's public certificate.
   ///

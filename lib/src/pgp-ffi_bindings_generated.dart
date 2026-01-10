@@ -991,6 +991,62 @@ class PgpFfiBindings {
               ffi.Pointer<ffi.Uint8>,
               int,
               ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Sign `plaintext` with the certificate using the Cleartext Signature
+  /// Framework (RFC 4880 section 7), writing a "BEGIN PGP SIGNED MESSAGE" block to
+  /// `*signed_message`. Caller must free `*signed_message` with `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `plaintext`, and `signed_message` must be non-null.
+  int pgp_certificate_sign_cleartext(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> plaintext,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> signed_message,
+  ) {
+    return _pgp_certificate_sign_cleartext(
+      cert,
+      plaintext,
+      signed_message,
+    );
+  }
+
+  late final _pgp_certificate_sign_cleartextPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_sign_cleartext');
+  late final _pgp_certificate_sign_cleartext =
+      _pgp_certificate_sign_cleartextPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Verify a "BEGIN PGP SIGNED MESSAGE" cleartext-signed message using the
+  /// certificate. Writes the plaintext to `*plaintext_out`. Caller must free
+  /// `*plaintext_out` with `free()`.
+  ///
+  /// # Safety
+  /// `cert`, `signed_message`, and `plaintext_out` must be non-null.
+  int pgp_certificate_verify_cleartext(
+    ffi.Pointer<Certificate> cert,
+    ffi.Pointer<ffi.Char> signed_message,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> plaintext_out,
+  ) {
+    return _pgp_certificate_verify_cleartext(
+      cert,
+      signed_message,
+      plaintext_out,
+    );
+  }
+
+  late final _pgp_certificate_verify_cleartextPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<Certificate>,
+                  ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_certificate_verify_cleartext');
+  late final _pgp_certificate_verify_cleartext =
+      _pgp_certificate_verify_cleartextPtr.asFunction<
+          int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 }
 
 final class Certificate extends ffi.Opaque {}

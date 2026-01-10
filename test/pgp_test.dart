@@ -517,6 +517,54 @@ void main() {
     });
   });
 
+  group('cleartext signatures', () {
+    test('signCleartext produces a SIGNED MESSAGE block', () {
+      final cert = pgp.generateKey('cleartext@example.org');
+      const plain = 'hello cleartext world';
+      final signed = cert.signCleartext(plain);
+      expect(signed, contains('-----BEGIN PGP SIGNED MESSAGE-----'));
+      expect(signed, contains('-----BEGIN PGP SIGNATURE-----'));
+      cert.dispose();
+    });
+
+    test('signCleartext embeds the plaintext visibly', () {
+      final cert = pgp.generateKey('cleartext@example.org');
+      const plain = 'readable content for humans';
+      final signed = cert.signCleartext(plain);
+      expect(signed, contains(plain));
+      cert.dispose();
+    });
+
+    test('verifyCleartext round-trips through a public certificate', () {
+      final cert = pgp.generateKey('cleartext@example.org');
+      final pub = pgp.certificateFromArmored(cert.exportPublicArmored());
+      const plain = 'hello cleartext round-trip';
+      final signed = cert.signCleartext(plain);
+      expect(pub.verifyCleartext(signed), plain);
+      pub.dispose();
+      cert.dispose();
+    });
+
+    test('verifyCleartext rejects a different certificate', () {
+      final cert = pgp.generateKey('cleartext@example.org');
+      final other = pgp.generateKey('other@example.org');
+      final signed = cert.signCleartext('hello');
+      expect(
+        () => other.verifyCleartext(signed),
+        throwsA(isA<PgpException>()),
+      );
+      other.dispose();
+      cert.dispose();
+    });
+
+    test('cleartext message is not a PGP MESSAGE block', () {
+      final cert = pgp.generateKey('cleartext@example.org');
+      final signed = cert.signCleartext('test');
+      expect(signed, isNot(contains('-----BEGIN PGP MESSAGE-----')));
+      cert.dispose();
+    });
+  });
+
   group('encryptToRecipients', () {
     test('encrypts to two recipients, each can decrypt', () {
       final alice = pgp.generateKey('alice@example.org');
