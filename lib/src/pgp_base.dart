@@ -556,6 +556,48 @@ class PGP {
     }
   }
 
+  /// Encrypts [plaintext] symmetrically using [passphrase] (no public key
+  /// required). Returns an ASCII-armored message.
+  static String encryptSymmetric(String plaintext, String passphrase) {
+    final ptPtr = plaintext.toNativeUtf8();
+    final ppPtr = passphrase.toNativeUtf8();
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_encrypt_string_symmetric(
+          ptPtr.cast(), ppPtr.cast(), out);
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return result;
+    } finally {
+      calloc.free(ptPtr);
+      calloc.free(ppPtr);
+      calloc.free(out);
+    }
+  }
+
+  /// Decrypts a passphrase-encrypted [message] using [passphrase].
+  ///
+  /// Throws [PgpException] if the passphrase is wrong or the message was not
+  /// symmetrically encrypted.
+  static String decryptSymmetric(String message, String passphrase) {
+    final msgPtr = message.toNativeUtf8();
+    final ppPtr = passphrase.toNativeUtf8();
+    final out = calloc<Pointer<Char>>();
+    try {
+      final code = _bindings.pgp_decrypt_string_symmetric(
+          msgPtr.cast(), ppPtr.cast(), out);
+      if (code != 0) throw PgpException(code);
+      final result = out.value.cast<Utf8>().toDartString();
+      calloc.free(out.value);
+      return result;
+    } finally {
+      calloc.free(msgPtr);
+      calloc.free(ppPtr);
+      calloc.free(out);
+    }
+  }
+
   /// Generates a new certificate carrying [userId].
   Certificate generateKey(String userId) {
     final userIdPointer = userId.toNativeUtf8();

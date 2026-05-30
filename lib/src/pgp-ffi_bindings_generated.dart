@@ -1047,6 +1047,63 @@ class PgpFfiBindings {
       _pgp_certificate_verify_cleartextPtr.asFunction<
           int Function(ffi.Pointer<Certificate>, ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Encrypt `plaintext` with `passphrase` (no public key required), writing an
+  /// ASCII-armored message to `*armored_message`. Caller must free
+  /// `*armored_message` with `free()`.
+  ///
+  /// # Safety
+  /// `plaintext`, `passphrase`, and `armored_message` must be non-null.
+  int pgp_encrypt_string_symmetric(
+    ffi.Pointer<ffi.Char> plaintext,
+    ffi.Pointer<ffi.Char> passphrase,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> armored_message,
+  ) {
+    return _pgp_encrypt_string_symmetric(
+      plaintext,
+      passphrase,
+      armored_message,
+    );
+  }
+
+  late final _pgp_encrypt_string_symmetricPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_encrypt_string_symmetric');
+  late final _pgp_encrypt_string_symmetric =
+      _pgp_encrypt_string_symmetricPtr.asFunction<
+          int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
+
+  /// Decrypt an ASCII-armored passphrase-encrypted message, writing plaintext to
+  /// `*plaintext_out`. Caller must free `*plaintext_out` with `free()`.
+  ///
+  /// Returns `Failed` (-3) if the passphrase is wrong or the message has no SKESK.
+  ///
+  /// # Safety
+  /// `armored_message`, `passphrase`, and `plaintext_out` must be non-null.
+  int pgp_decrypt_string_symmetric(
+    ffi.Pointer<ffi.Char> armored_message,
+    ffi.Pointer<ffi.Char> passphrase,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> plaintext_out,
+  ) {
+    return _pgp_decrypt_string_symmetric(
+      armored_message,
+      passphrase,
+      plaintext_out,
+    );
+  }
+
+  late final _pgp_decrypt_string_symmetricPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int32 Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<ffi.Pointer<ffi.Char>>)>>(
+      'pgp_decrypt_string_symmetric');
+  late final _pgp_decrypt_string_symmetric =
+      _pgp_decrypt_string_symmetricPtr.asFunction<
+          int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Pointer<ffi.Char>>)>();
 }
 
 final class Certificate extends ffi.Opaque {}

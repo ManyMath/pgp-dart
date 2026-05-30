@@ -565,6 +565,43 @@ void main() {
     });
   });
 
+  group('symmetric encryption', () {
+    test('encryptSymmetric produces an armored message', () {
+      final cipher = PGP.encryptSymmetric('hello symmetric', 'passphrase1');
+      expect(cipher, contains('-----BEGIN PGP MESSAGE-----'));
+    });
+
+    test('encryptSymmetric and decryptSymmetric round-trip', () {
+      const plain = 'secret backup data';
+      const pass = 'correct horse battery staple';
+      final cipher = PGP.encryptSymmetric(plain, pass);
+      expect(PGP.decryptSymmetric(cipher, pass), plain);
+    });
+
+    test('decryptSymmetric rejects wrong passphrase', () {
+      final cipher = PGP.encryptSymmetric('sensitive', 'rightpass');
+      expect(
+        () => PGP.decryptSymmetric(cipher, 'wrongpass'),
+        throwsA(isA<PgpException>()),
+      );
+    });
+
+    test('encryptSymmetric output is different each time (random session key)', () {
+      const plain = 'same message';
+      const pass = 'same pass';
+      final c1 = PGP.encryptSymmetric(plain, pass);
+      final c2 = PGP.encryptSymmetric(plain, pass);
+      expect(c1, isNot(equals(c2)));
+    });
+
+    test('symmetric ciphertext cannot be decrypted without passphrase', () {
+      final cert = pgp.generateKey('somebody@example.org');
+      final cipher = PGP.encryptSymmetric('top secret', 'mypassword');
+      expect(() => cert.decrypt(cipher), throwsA(isA<PgpException>()));
+      cert.dispose();
+    });
+  });
+
   group('encryptToRecipients', () {
     test('encrypts to two recipients, each can decrypt', () {
       final alice = pgp.generateKey('alice@example.org');
